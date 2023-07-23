@@ -392,19 +392,6 @@ function initializeGame(gridSize, humanTurn) {
   gameLoop();
 }
 
-
-
-
-function resetGame() {
-  debuggerl
-  game = new Game();
-}
-
-function goHome() {
-  document.getElementById("game-section").style.display = "none";
-  document.getElementById("options").style.display = "block";
-}
-
 // Start the game loop
 function gameLoop() {
   context.fillStyle = WHITE;
@@ -466,12 +453,11 @@ function startGame() {
 }
 
 function resetGame() {
-  game = new Game();
+  startGame();
   gameResultDiv.textContent = "";  // Clear the game result message
 }
 
 function goHome() {
-  document.getElementById("options").style.display = "block"; // Show the options section
-  document.getElementById("game-section").style.display = "none"; // Hide the game section
-  resetGame(); // Reset the game
+  document.getElementById("game-section").style.display = "none";
+  document.getElementById("options").style.display = "block";
 }
