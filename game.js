@@ -15,7 +15,7 @@ const LIGHT_GRAY = "#cccccc";
 const PLAYER_COLORS = [RED, BLUE];
 
 class Game {
-  constructor(humanTurn = false) {
+  constructor(humanTurn = true) {
     this.currentPlayer = 1;
     this.hlines = Array.from({ length: GRID_SIZE + 1 }, () =>
       Array.from({ length: GRID_SIZE }, () => null)
@@ -231,16 +231,21 @@ class Game {
 
     context.fillStyle = BLACK;
     context.fillText(
-      `Player 1: ${player1Score}`,
+      `You: ${player1Score}`,
       20,
       SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 - 10
     );
 
     context.fillText(
-      `Player 2: ${player2Score}`,
+      `Computer: ${player2Score}`,
       20,
       SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 + 30
     );
+    const allLines = [...this.hlines, ...this.vlines].flat();
+    const noMovesPlayed = !allLines.filter(Boolean).length;
+    if (!noMovesPlayed) {
+      gameStatusH2.textContent = this.humanTurn ? 'Your turn' : 'Computer turn';
+    }
   }
 
   getAvailableLines() {
@@ -274,7 +279,10 @@ class Game {
     }
   }
 
-  computerTurn() {
+  waiting = false;
+  async computerTurn() {
+    this.waiting = true;
+    await new Promise(resolve => setTimeout(resolve, 1000));
     this.squareCompletedLastTurn = false;
     let squareCompleted = true;
     while (squareCompleted && this.getAvailableLines().length > 0) {
@@ -298,12 +306,14 @@ class Game {
       }
 
       squareCompleted = this.updateSquares([lineI, lineJ], lineType);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     if (!squareCompleted && !this.squareCompletedLastTurn) {
       this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
       this.humanTurn = true;
     }
+    this.waiting = false;
   }
 
 
@@ -351,26 +361,29 @@ let game = null;
 let canvas = null;
 let context = null;
 let gameResultDiv = null;
+let gameStatusH2 = null;
 
 // Game initialization
 function initializeGame(gridSize, humanTurn) {
   GRID_SIZE = gridSize;
-  game = new Game(humanTurn);
+  game = new Game();
   canvas = document.getElementById("game-canvas");
   context = canvas.getContext("2d");
   gameResultDiv = document.getElementById("game-result");
+  gameStatusH2 = document.getElementById("game-status");
 
   // Set the canvas drawing surface size
-  canvas.width = WINDOW_SIZE;
+  canvas.width = WINDOW_SIZE - SCORE_AREA_HEIGHT;
   canvas.height = WINDOW_SIZE;
 
   // Set the canvas display size
-  canvas.style.width = `${WINDOW_SIZE}px`;
+  canvas.style.width = `${WINDOW_SIZE - SCORE_AREA_HEIGHT}px`;
   canvas.style.height = `${WINDOW_SIZE}px`;
 
   // Show the game section and hide the options section
   document.getElementById("options").style.display = "none";
   document.getElementById("game-section").style.display = "block";
+  gameStatusH2.textContent = `Game on! ${humanTurn ? 'You start' : 'Computer starts!'}`;
 
   // Add event listener for canvas click
   canvas.addEventListener("click", handleCanvasClick);
@@ -383,6 +396,7 @@ function initializeGame(gridSize, humanTurn) {
 
 
 function resetGame() {
+  debuggerl
   game = new Game();
 }
 
@@ -425,7 +439,7 @@ function gameLoop() {
     } else {
       // Computer player's turn
       canvas.style.cursor = "default";
-      game.computerTurn();
+      !game.waiting && game.computerTurn();
     }
   }
 
@@ -434,6 +448,9 @@ function gameLoop() {
 
 // Event handlers
 function handleCanvasClick(event) {
+  if (game.waiting) {
+    return;
+  }
   const rect = canvas.getBoundingClientRect();
   const x = event.clientX - rect.left;
   const y = event.clientY - rect.top;
@@ -449,7 +466,7 @@ function startGame() {
 }
 
 function resetGame() {
-  game = new Game(game.humanTurn);
+  game = new Game();
   gameResultDiv.textContent = "";  // Clear the game result message
 }
 
