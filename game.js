@@ -1,5 +1,5 @@
 // Constants
-import 'regenerator-runtime/runtime'
+// require('regenerator-runtime/runtime');
 
 let GRID_SIZE = 3;
 const LINE_THICKNESS = 5;
@@ -283,7 +283,7 @@ class Game {
 
   async computerTurn() {
     this.waiting = true;
-    await new Promise(resolve => setTimeout(resolve, 1000));
+    await new Promise(resolve => setTimeout(resolve, 2000 * Math.random()));
     this.squareCompletedLastTurn = false;
     let squareCompleted = true;
     while (squareCompleted && this.getAvailableLines().length > 0) {
@@ -307,7 +307,7 @@ class Game {
       }
 
       squareCompleted = this.updateSquares([lineI, lineJ], lineType);
-      await new Promise(resolve => setTimeout(resolve, 1000));
+      await new Promise(resolve => setTimeout(resolve, 2000 * Math.random()));
     }
 
     if (!squareCompleted && !this.squareCompletedLastTurn) {
