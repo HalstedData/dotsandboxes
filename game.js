@@ -460,3 +460,5 @@ function goHome() {
   document.getElementById("game-section").style.display = "none";
   document.getElementById("options").style.display = "block";
 }
+
+document.getElementById("start-button").addEventListener("click", startGame);
