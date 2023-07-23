@@ -1,5 +1,5 @@
 {
-  "name": " ",
+  "name": "dotsandboxes",
   "version": "0.0.1",
   "description": "",
   "keywords": "",
@@ -13,5 +13,8 @@
   },
   "devDependencies": {
     "parcel-bundler": "^1.12.4"
-  }
+  },
+  "browserslist": [
+    "last 1 Chrome version"
+  ]
 }
