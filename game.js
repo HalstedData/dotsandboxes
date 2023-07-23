@@ -1,4 +1,6 @@
 // Constants
+import 'regenerator-runtime/runtime'
+
 let GRID_SIZE = 3;
 const LINE_THICKNESS = 5;
 const DOT_RADIUS = 7;
@@ -36,16 +38,16 @@ class Game {
     this.waiting = false;
   }
 
-    isGameOver() {
-  for (let i = 0; i < GRID_SIZE; i++) {
-    for (let j = 0; j < GRID_SIZE; j++) {
-      if (this.squares[i][j] === 0) {
-        return false;
+  isGameOver() {
+    for (let i = 0; i < GRID_SIZE; i++) {
+      for (let j = 0; j < GRID_SIZE; j++) {
+        if (this.squares[i][j] === 0) {
+          return false;
+        }
       }
     }
+    return true;
   }
-  return true;
-}
 
 
   updateLine(x, y) {
@@ -461,4 +463,7 @@ function goHome() {
   document.getElementById("options").style.display = "block";
 }
 
+// event handlers
 document.getElementById("start-button").addEventListener("click", startGame);
+document.getElementById("reset-game").addEventListener("click", resetGame);
+document.getElementById("go-home").addEventListener("click", goHome);
