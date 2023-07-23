@@ -33,7 +33,7 @@ class Game {
     this.squareCompletedLastTurn = false;
     this.boxSize = (SCREEN_SIZE - 40) / GRID_SIZE;
     this.numstring = Array(GRID_SIZE ** 2).fill(0);
-
+    this.waiting = false;
   }
 
     isGameOver() {
@@ -279,7 +279,6 @@ class Game {
     }
   }
 
-  waiting = false;
   async computerTurn() {
     this.waiting = true;
     await new Promise(resolve => setTimeout(resolve, 1000));
