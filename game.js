@@ -403,6 +403,7 @@ function gameLoop() {
   if (game.isGameOver()) {
     game.gameOver = true;
     canvas.style.cursor = "default";
+    gameStatusH2.textContent = '';
 
     // Determine the winner and update the game result div
     let message = "";
@@ -417,7 +418,8 @@ function gameLoop() {
       message = "It's a tie!";
     }
 
-    gameResultDiv.textContent = message;
+    gameStatusH2.textContent = message;
+    // gameResultDiv.textContent = message;
 
     return;
   } else {
