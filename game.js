@@ -159,6 +159,8 @@ class Game {
     } else if (lineType === "v") {
       squareCompleted = this.checkSquareCompletionV(lineI, lineJ);
     }
+
+    console.log('current board', JSON.stringify({ verticalLines: this.vlines, horizontalLines: this.hlines }, null, 2));
     return squareCompleted;
   }
 
@@ -269,18 +271,6 @@ class Game {
     return availableLines;
   }
 
-  updateNumstring() {
-    for (let i = 0; i < GRID_SIZE; i++) {
-      for (let j = 0; j < GRID_SIZE; j++) {
-        const top = Number(this.hlines[i][j] !== null);
-        const bottom = Number(this.hlines[i + 1][j] !== null);
-        const left = Number(this.vlines[i][j] !== null);
-        const right = Number(this.vlines[i][j + 1] !== null);
-        this.numstring[i * GRID_SIZE + j] = top + bottom + left + right;
-      }
-    }
-  }
-
   async computerTurn() {
     this.waiting = true;
     await new Promise(resolve => setTimeout(resolve, 2000 * Math.random()));
@@ -288,16 +278,12 @@ class Game {
     let squareCompleted = true;
     while (squareCompleted && this.getAvailableLines().length > 0) {
       squareCompleted = false;
-      const availableLines = this.getAvailableLines();
-      const optimalMoves = this.generateOptimalMove();
 
-      let chosenMove;
-      if (optimalMoves.length > 0) {
-        chosenMove = optimalMoves[Math.floor(Math.random() * optimalMoves.length)];
-      } else {
-        chosenMove = availableLines[Math.floor(Math.random() * availableLines.length)];
-      }
-
+      const chosenMove = await getComputerMove({
+        hlines: this.hlines,
+        vlines : this.vlines,
+        gridSize: GRID_SIZE,
+      });
       const [lineType, lineI, lineJ] = chosenMove;
 
       if (lineType === "h") {
@@ -335,6 +321,8 @@ class Game {
 
       const squareCompleted = this.updateSquares([lineI, lineJ], lineType);
       this.updateNumstring();
+
+      // console.log('numstring now', this.numstring);
 
       if (squareCompleted) {
         optimalMoves.push(move);
