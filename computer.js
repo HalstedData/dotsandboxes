@@ -11,7 +11,7 @@ async function getComputerMove({
   };
 
   const response = await fetch(
-    'http://127.0.0.1:5000/get-computer-move',
+    'http://38.108.119.159:5000/get-computer-move',
     {
       method: 'POST',
       mode: 'cors', // no-cors, *cors, same-origin
