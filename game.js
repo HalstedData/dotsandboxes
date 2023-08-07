@@ -284,7 +284,7 @@ class Game {
     };
   
     const response = await fetch(
-      'http://38.108.119.159:5000/get-computer-move',
+      'https://chiefsmurph.com/dotsandboxes/get-computer-move',
       {
         method: 'POST',
         mode: 'cors', // no-cors, *cors, same-origin
