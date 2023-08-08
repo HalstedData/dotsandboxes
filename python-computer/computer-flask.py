@@ -178,6 +178,16 @@ class Game:
                 right = int(self.vlines[i, j + 1] is not None)
                 self.numstring[i * self.GRID_SIZE + j] = top + bottom + left + right
 
+    def get_computer_move(self):
+        available_lines = self.get_available_lines()
+        optimal_moves = self.generate_optimal_move()
+
+        if optimal_moves:
+            chosen_move = random.choice(optimal_moves)
+        else:
+            chosen_move = random.choice(available_lines)
+        return chosen_move
+
     def computer_turn(self):
         if self.game_over:  # Check if the game is already over
             return
