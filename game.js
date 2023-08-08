@@ -301,7 +301,7 @@ class Game {
 
   async computerTurn() {
     this.waiting = true;
-    await new Promise(resolve => setTimeout(resolve, 2000 * Math.random()));
+    await new Promise(resolve => setTimeout(resolve, 1000 * Math.random()));
     this.squareCompletedLastTurn = false;
     let squareCompleted = true;
     while (squareCompleted && this.getAvailableLines().length > 0) {
