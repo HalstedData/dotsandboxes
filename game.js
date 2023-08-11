@@ -282,9 +282,13 @@ class Game {
       vlines,
       gridSize
     };
+
+    const { host } = window.location;
+    const inDevMode = !host || host && ['127.0.0.1', 'localhost'].some(h => host.includes(h));
+    const requestHost = inDevMode ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
   
     const response = await fetch(
-      'https://chiefsmurph.com/dotsandboxes/get-computer-move',
+      `${requestHost}/get-computer-move`,
       {
         method: 'POST',
         mode: 'cors', // no-cors, *cors, same-origin
