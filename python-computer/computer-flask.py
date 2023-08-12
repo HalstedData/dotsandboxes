@@ -145,8 +145,10 @@ class Game:
         optimalMoves = self.generateOptimalMove()
         
         if optimalMoves:
+            print("choosing optimal move")
             chosenMove = random.choice(optimalMoves)
         else:
+            print("choosing available line")
             chosenMove = random.choice(availableLines)
         
         return chosenMove
@@ -169,6 +171,7 @@ def data():
     game = Game(np.array(hlines), np.array(vlines), gridSize)
     print(game.hlines)
     print(game.vlines)
+    print(game.curren)
 
 
     computer_move = game.getComputerMove()
