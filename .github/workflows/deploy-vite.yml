@@ -35,6 +35,7 @@ jobs:
         with:
           node-version: 18  # Change this to your desired Node.js version
           cache: 'npm'
+          cache-dependency-path: vite-game/package-lock.json
       - name: Install dependencies
         run: npm install --prefix vite-game
       - name: Build
