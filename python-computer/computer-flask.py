@@ -171,7 +171,7 @@ def data():
     game = Game(np.array(hlines), np.array(vlines), gridSize)
     print(game.hlines)
     print(game.vlines)
-    print(game.curren)
+    print(game.current)
 
 
     computer_move = game.getComputerMove()
