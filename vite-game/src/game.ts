@@ -217,32 +217,42 @@ class Game implements IGame {
     context.lineWidth = LINE_THICKNESS;
     for (let i = 0; i < this.gridSize + 1; i++) {
       for (let j = 0; j < this.gridSize; j++) {
-        const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["h", i, j]);
+        const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["h", i, j]) && !this.hlines[i][j];
         const color = this.hlines[i][j] || (isHoverLine && 'orange') || LIGHT_GRAY;
+        if (isHoverLine) {
+          context.globalAlpha = 0.4;
+        }
         context.strokeStyle = color;
-        const lineWidth = isHoverLine ? 20 : 10;
-        context.lineWidth = lineWidth;
+
+        // context.lineWidth = JSON.stringify(this.lastComputerLine) === JSON.stringify(["h", i, j]) ? 20 : 10;
         context.beginPath();
         context.moveTo(20 + j * this.boxSize, 20 + i * this.boxSize);
         context.lineTo(20 + (j + 1) * this.boxSize, 20 + i * this.boxSize);
         context.stroke();
-        context.lineWidth = 10;
+        if (isHoverLine) {
+          context.globalAlpha = 1;
+        }
       }
     }
 
     for (let i = 0; i < this.gridSize + 1; i++) {
       for (let j = 0; j < this.gridSize + 1; j++) {
         if (i < this.gridSize) {
-          const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["v", i, j]);
+          const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["v", i, j]) && !this.vlines[i][j];
           const color = this.vlines[i][j] || (isHoverLine && 'orange') || LIGHT_GRAY;
           context.strokeStyle = color;
-          const lineWidth = isHoverLine ? 20 : 10;
-          context.lineWidth = lineWidth;
+          if (isHoverLine) {
+            context.globalAlpha = 0.4;
+          }
+          // const lineWidth = isHoverLine ? 20 : 10;
+          // context.lineWidth = lineWidth;
           context.beginPath();
           context.moveTo(20 + j * this.boxSize, 20 + i * this.boxSize);
           context.lineTo(20 + j * this.boxSize, 20 + (i + 1) * this.boxSize);
           context.stroke();
-          context.lineWidth = 10;
+          if (isHoverLine) {
+            context.globalAlpha = 1;
+          }
         }
         context.fillStyle = BLACK;
         context.beginPath();
@@ -322,7 +332,7 @@ class Game implements IGame {
 
     const { host } = window.location;
     const inDevMode = !host || host && ['127.0.0.1', 'localhost'].some(h => host.includes(h));
-    const requestHost = inDevMode && false ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
+    const requestHost = inDevMode && true ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
 
     const response = await fetch(
       `${requestHost}/get-computer-move`,
