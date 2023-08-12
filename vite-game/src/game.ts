@@ -21,7 +21,7 @@ type LineArray<T = string | null> = T[][];
 type ChosenMove = ['h' | 'v', number, number];
 
 interface IGame {
-  getComputerMove: (params: { hlines: LineArray, vlines: LineArray, gridSize: number }) => Promise<ChosenMove>;
+  getComputerMove: () => Promise<ChosenMove>;
 } 
 
 class Game implements IGame {
@@ -298,6 +298,8 @@ class Game implements IGame {
       vlines: this.hlines,
       gridSize: this.gridSize
     };
+
+    console.log({})
 
     const { host } = window.location;
     const inDevMode = !host || host && ['127.0.0.1', 'localhost'].some(h => host.includes(h));
