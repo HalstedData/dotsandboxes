@@ -1,6 +1,9 @@
+import logging
 from flask import Flask, request, jsonify
 from flask_cors import CORS
+
 import numpy as np
+import random
 import random
 
 
@@ -28,6 +31,53 @@ class Game:
         self.BLACK = "#000000"
         self.LIGHT_GRAY = "#cccccc"
         self.PLAYER_COLORS = [self.RED, self.BLUE]
+
+    def generate_optimal_move_minimax(self, depth=3):
+        alpha = float('-inf')
+        beta = float('inf')
+
+        best_score = float('-inf')
+        best_move = None
+
+        for move in self.getAvailableLines():
+            self.play_move(move)
+            score = self.minimax(depth - 1, alpha, beta, False)
+            self.undo_move(move)
+
+            if score > best_score:
+                best_score = score
+                best_move = move
+
+            alpha = max(alpha, score)
+
+        return best_move
+
+    def minimax(self, depth, alpha, beta, maximizing_player):
+        if depth == 0 or self.isGameOver():
+            return self.evaluate_position()
+
+        if maximizing_player:
+            max_eval = float('-inf')
+            for move in self.getAvailableLines():
+                self.play_move(move)
+                eval = self.minimax(depth - 1, alpha, beta, False)
+                self.undo_move(move)
+                max_eval = max(max_eval, eval)
+                alpha = max(alpha, eval)
+                if beta <= alpha:
+                    break
+            return max_eval
+        else:
+            min_eval = float('inf')
+            for move in self.getAvailableLines():
+                self.play_move(move)
+                eval = self.minimax(depth - 1, alpha, beta, True)
+                self.undo_move(move)
+                min_eval = min(min_eval, eval)
+                beta = min(beta, eval)
+                if beta <= alpha:
+                    break
+            return min_eval
 
     def isGameOver(self):
         for i in range(self.gridSize):
@@ -106,37 +156,91 @@ class Game:
                 right = int(self.vlines[i][j + 1] is not None)
                 self.numstring[i * self.gridSize + j] = top + bottom + left + right
 
+    def evaluateMove(self, line_type, line_i, line_j):
+        if line_type == 'h':
+            self.hlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
+        elif line_type == 'v':
+            self.vlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
+
+        # Calculate chain length
+        chain_length = 0
+        square_completed = self.updateSquares((line_i, line_j), line_type)
+        while square_completed:
+            chain_length += 1
+            self.updateNumstring()
+            square_completed = self.updateSquares((line_i, line_j), line_type)
+
+        # Undo the move
+        if line_type == 'h':
+            self.hlines[line_i][line_j] = None
+        elif line_type == 'v':
+            self.vlines[line_i][line_j] = None
+        self.numstring = [0] * (self.gridSize ** 2)
+        self.updateNumstring()
+
+        return square_completed, chain_length
+
     def generateOptimalMove(self):
         self.updateNumstring()
-        availableLines = self.getAvailableLines()
-        optimalMoves = []
-        riskyMoves = []
+        available_lines = self.getAvailableLines()
+        optimal_moves = []
+        safe_moves = []
+        risky_moves = []
+        chain_moves = []
 
-        for move in availableLines:
-            lineType, lineI, lineJ = move
+        # Separate chain_moves into two categories: long_chains and short_chains
+        long_chains = []
+        short_chains = []
 
-            if lineType == "h":
-                self.hlines[lineI][lineJ] = self.PLAYER_COLORS[self.currentPlayer - 1]
-            elif lineType == "v":
-                self.vlines[lineI][lineJ] = self.PLAYER_COLORS[self.currentPlayer - 1]
+        for move in available_lines:
+            line_type, line_i, line_j = move
+            square_completed, chain_length = self.evaluateMove(line_type, line_i, line_j)
 
-            squareCompleted = self.updateSquares((lineI, lineJ), lineType)
-            self.updateNumstring()
-
-            if squareCompleted:
-                optimalMoves.append(move)
+            if square_completed:
+                optimal_moves.append(move)
             elif 3 in self.numstring:
-                riskyMoves.append(move)
+                risky_moves.append(move)
+                if chain_length == 1:
+                    short_chains.append(move)
+                elif chain_length >= 3:
+                    long_chains.append(move)
+            else:
+                safe_moves.append(move)
 
-            if lineType == "h":
-                self.hlines[lineI][lineJ] = None
-            elif lineType == "v":
-                self.vlines[lineI][lineJ] = None
+            # Undo the move
+            if line_type == 'h':
+                self.hlines[line_i, line_j] = None
+            elif line_type == 'v':
+                self.vlines[line_i, line_j] = None
 
-        if optimalMoves:
-            return optimalMoves
+        # If there are moves that complete a square, return them
+        if optimal_moves:
+            print("optimal was used for this move.")
+            return optimal_moves
 
-        return [move for move in availableLines if move not in riskyMoves]
+        # If there are long chain moves (3 or more), play them using minimax
+        if long_chains:
+            print("Minimax with Alpha-Beta pruning was used for this move.")
+            best_move = self.generate_optimal_move_minimax()
+            return [best_move]
+
+        # If there are safe moves, return them
+        if safe_moves:
+            print("safe move was used for this move.")
+            return safe_moves
+
+        # If there are short chain moves, return them
+        if short_chains:
+            print("short chain move was used for this move.")
+            return short_chains
+
+        # If there are risky moves, return them
+        if risky_moves:
+            print("Minimax was used for this move.")
+            return risky_moves
+
+        # If no moves found, use minimax
+        return self.generate_optimal_move_minimax()
 
     def getComputerMove(self):
         availableLines = self.getAvailableLines()
