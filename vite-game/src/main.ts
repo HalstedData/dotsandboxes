@@ -4,7 +4,7 @@ import './style.css'
 import { setupGame } from './game.ts'
 
 document.querySelector<HTMLDivElement>('#app')!.innerHTML = `
-  <h1 id="game-title">Dots and Boxes v2</h1>
+  <h1 id="game-title">Dots and Boxes v2.1</h1>
   <div id="options">
     <label for="grid-size">Grid Size:</label>
     <select id="grid-size">
