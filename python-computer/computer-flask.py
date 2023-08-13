@@ -1,11 +1,7 @@
-import logging
+import random
+import numpy as np
 from flask import Flask, request, jsonify
 from flask_cors import CORS
-
-import numpy as np
-import random
-import random
-
 
 class Game:
     def __init__(self, hlines=None, vlines=None, gridSize=3):
@@ -32,52 +28,24 @@ class Game:
         self.LIGHT_GRAY = "#cccccc"
         self.PLAYER_COLORS = [self.RED, self.BLUE]
 
-    def generate_optimal_move_minimax(self, depth=3):
-        alpha = float('-inf')
-        beta = float('inf')
+    def evaluateMove(self, line_type, line_i, line_j):
+        if line_type == 'h':
+            self.hlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
+        elif line_type == 'v':
+            self.vlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
 
-        best_score = float('-inf')
-        best_move = None
+        square_completed = self.updateSquares((line_i, line_j), line_type)
+        self.updateNumstring()
 
-        for move in self.getAvailableLines():
-            self.play_move(move)
-            score = self.minimax(depth - 1, alpha, beta, False)
-            self.undo_move(move)
+        chain_length = self.numstring.count(3)
 
-            if score > best_score:
-                best_score = score
-                best_move = move
+        # Undo the move
+        if line_type == 'h':
+            self.hlines[line_i][line_j] = None
+        elif line_type == 'v':
+            self.vlines[line_i][line_j] = None
 
-            alpha = max(alpha, score)
-
-        return best_move
-
-    def minimax(self, depth, alpha, beta, maximizing_player):
-        if depth == 0 or self.isGameOver():
-            return self.evaluate_position()
-
-        if maximizing_player:
-            max_eval = float('-inf')
-            for move in self.getAvailableLines():
-                self.play_move(move)
-                eval = self.minimax(depth - 1, alpha, beta, False)
-                self.undo_move(move)
-                max_eval = max(max_eval, eval)
-                alpha = max(alpha, eval)
-                if beta <= alpha:
-                    break
-            return max_eval
-        else:
-            min_eval = float('inf')
-            for move in self.getAvailableLines():
-                self.play_move(move)
-                eval = self.minimax(depth - 1, alpha, beta, True)
-                self.undo_move(move)
-                min_eval = min(min_eval, eval)
-                beta = min(beta, eval)
-                if beta <= alpha:
-                    break
-            return min_eval
+        return square_completed, chain_length
 
     def isGameOver(self):
         for i in range(self.gridSize):
@@ -156,41 +124,14 @@ class Game:
                 right = int(self.vlines[i][j + 1] is not None)
                 self.numstring[i * self.gridSize + j] = top + bottom + left + right
 
-    def evaluateMove(self, line_type, line_i, line_j):
-        if line_type == 'h':
-            self.hlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
-        elif line_type == 'v':
-            self.vlines[line_i][line_j] = self.PLAYER_COLORS[self.currentPlayer - 1]
-
-        # Calculate chain length
-        chain_length = 0
-        square_completed = self.updateSquares((line_i, line_j), line_type)
-        while square_completed:
-            chain_length += 1
-            self.updateNumstring()
-            square_completed = self.updateSquares((line_i, line_j), line_type)
-
-        # Undo the move
-        if line_type == 'h':
-            self.hlines[line_i][line_j] = None
-        elif line_type == 'v':
-            self.vlines[line_i][line_j] = None
-        self.numstring = [0] * (self.gridSize ** 2)
-        self.updateNumstring()
-
-        return square_completed, chain_length
-
     def generateOptimalMove(self):
         self.updateNumstring()
         available_lines = self.getAvailableLines()
         optimal_moves = []
         safe_moves = []
         risky_moves = []
+        single_box_moves = []
         chain_moves = []
-
-        # Separate chain_moves into two categories: long_chains and short_chains
-        long_chains = []
-        short_chains = []
 
         for move in available_lines:
             line_type, line_i, line_j = move
@@ -201,9 +142,9 @@ class Game:
             elif 3 in self.numstring:
                 risky_moves.append(move)
                 if chain_length == 1:
-                    short_chains.append(move)
-                elif chain_length >= 3:
-                    long_chains.append(move)
+                    single_box_moves.append(move)
+                elif chain_length > 2:
+                    chain_moves.append(move)
             else:
                 safe_moves.append(move)
 
@@ -218,21 +159,20 @@ class Game:
             print("optimal was used for this move.")
             return optimal_moves
 
-        # If there are long chain moves (3 or more), play them using minimax
-        if long_chains:
-            print("Minimax with Alpha-Beta pruning was used for this move.")
-            best_move = self.generate_optimal_move_minimax()
-            return [best_move]
-
         # If there are safe moves, return them
         if safe_moves:
             print("safe move was used for this move.")
             return safe_moves
 
-        # If there are short chain moves, return them
-        if short_chains:
-            print("short chain move was used for this move.")
-            return short_chains
+        # If there are chain moves, return them
+        if chain_moves:
+            print("chain move was used for this move.")
+            return chain_moves
+
+        # If there are single box moves, return them
+        if single_box_moves:
+            print("singlebox was used for this move.")
+            return single_box_moves
 
         # If there are risky moves, return them
         if risky_moves:
