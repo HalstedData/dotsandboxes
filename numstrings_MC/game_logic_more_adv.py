@@ -20,7 +20,7 @@ LIGHT_GRAY = (200, 200, 200)
 PLAYER_COLORS = [RED, BLUE]
 
 class Game:
-    def __init__(self, human_turn=True):
+    def __init__(self, human_turn=False):
         self.current_player = 1
         self.hlines = np.full((GRID_SIZE + 1, GRID_SIZE), None)
         self.vlines = np.full((GRID_SIZE, GRID_SIZE + 1), None)
@@ -189,7 +189,7 @@ class Game:
 
     def find_chain(self, i, j, chain, visited):
         if 0 <= i < GRID_SIZE and 0 <= j < GRID_SIZE and (i, j) not in visited and self.numstring[
-            i * GRID_SIZE + j] == 2:
+            i * GRID_SIZE + j] >= 2:
             chain.append((i, j))
             visited.add((i, j))
 
@@ -198,18 +198,37 @@ class Game:
                 if self.is_connected(i, j, x, y):  # Check connection between squares
                     self.find_chain(x, y, chain, visited)
 
-        return len(chain) > 1  # Return True if a chain (more than one square) is found
+        return len(chain) > 0  # Return True if a chain (including single square) is found
 
     def identify_chains(self):
         chains = []
         visited = set()  # To keep track of visited squares
         for i in range(GRID_SIZE):
             for j in range(GRID_SIZE):
-                if self.numstring[i * GRID_SIZE + j] == 2 and (i, j) not in visited:
+                if self.numstring[i * GRID_SIZE + j] >= 2 and (i, j) not in visited:
                     chain = []
                     found_chain = self.find_chain(i, j, chain, visited)
                     if found_chain:
                         chains.append(chain)
+
+                        # Check for special case: Two chains in a row
+                        for x, y in chain:
+                            # Check vertical connection
+                            if x + 1 < GRID_SIZE and self.numstring[(x + 1) * GRID_SIZE + y] >= 2 and \
+                                    self.hlines[x + 1, y] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x + 1, y, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
+                            # Check horizontal connection
+                            if y + 1 < GRID_SIZE and self.numstring[x * GRID_SIZE + (y + 1)] >= 2 and \
+                                    self.vlines[x, y + 1] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x, y + 1, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
         return chains
 
     def update_numstring(self):
@@ -315,7 +334,7 @@ class Game:
 
         if best_give_move:
             print(f"Making a move to give the shortest safe chain of length {best_give_length}.")
-            available_lines.remove(best_give_move)
+            return [best_give_move]
 
         optimal_moves = []
         risky_moves = []

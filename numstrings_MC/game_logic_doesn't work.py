@@ -20,7 +20,7 @@ LIGHT_GRAY = (200, 200, 200)
 PLAYER_COLORS = [RED, BLUE]
 
 class Game:
-    def __init__(self, human_turn=True):
+    def __init__(self, human_turn=False):
         self.current_player = 1
         self.hlines = np.full((GRID_SIZE + 1, GRID_SIZE), None)
         self.vlines = np.full((GRID_SIZE, GRID_SIZE + 1), None)
@@ -189,7 +189,7 @@ class Game:
 
     def find_chain(self, i, j, chain, visited):
         if 0 <= i < GRID_SIZE and 0 <= j < GRID_SIZE and (i, j) not in visited and self.numstring[
-            i * GRID_SIZE + j] == 2:
+            i * GRID_SIZE + j] >= 2:
             chain.append((i, j))
             visited.add((i, j))
 
@@ -198,19 +198,39 @@ class Game:
                 if self.is_connected(i, j, x, y):  # Check connection between squares
                     self.find_chain(x, y, chain, visited)
 
-        return len(chain) > 1  # Return True if a chain (more than one square) is found
+        return len(chain) > 1  # Return True if a chain (including single square) is found
 
     def identify_chains(self):
         chains = []
         visited = set()  # To keep track of visited squares
         for i in range(GRID_SIZE):
             for j in range(GRID_SIZE):
-                if self.numstring[i * GRID_SIZE + j] == 2 and (i, j) not in visited:
+                if self.numstring[i * GRID_SIZE + j] >= 2 and (i, j) not in visited:
                     chain = []
                     found_chain = self.find_chain(i, j, chain, visited)
                     if found_chain:
                         chains.append(chain)
-        return chains
+
+                        # Check for special case: Two chains in a row
+                        for x, y in chain:
+                            # Check vertical connection
+                            if x + 1 < GRID_SIZE and self.numstring[(x + 1) * GRID_SIZE + y] >= 2 and \
+                                    self.hlines[x + 1, y] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x + 1, y, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
+                            # Check horizontal connection
+                            if y + 1 < GRID_SIZE and self.numstring[x * GRID_SIZE + (y + 1)] >= 2 and \
+                                    self.vlines[x, y + 1] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x, y + 1, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
+        # Sort the chains by length in ascending order
+        return sorted(chains, key=len)
 
     def update_numstring(self):
         for i in range(GRID_SIZE):
@@ -259,35 +279,154 @@ class Game:
                 return 'v', i, j + 1
         return None
 
-    def find_move_to_give_chain(self, chain):
-        # Find the end squares of the chain
-        end_squares = [square for square in chain if sum(
-            self.is_connected(square[0], square[1], *neighbor) for neighbor in chain if neighbor != square) == 1]
+    def is_break_point(self, i, j, chain):
+        # Check the connections to the neighboring squares that are not in the chain
+        for x, y in [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]:
+            if (x, y) not in chain and self.is_connected(i, j, x, y):
+                return True
+        return False
 
-        # Look for a move that affects one of the end squares without creating a new chain
-        for i, j in end_squares:
-            # Check the horizontal lines
-            if self.hlines[i, j] is None and self.numstring[i * GRID_SIZE + j] == 2:
-                return 'h', i, j
-            if i < GRID_SIZE and self.hlines[i + 1, j] is None and self.numstring[(i + 1) * GRID_SIZE + j] == 2:
-                return 'h', i + 1, j
+    def calculate_possible_squares(self):
+        total_squares = 0
+        longest_chain_length = 0
 
-            # Check the vertical lines
-            if self.vlines[i, j] is None and self.numstring[i * GRID_SIZE + j] == 2:
-                return 'v', i, j
-            if j < GRID_SIZE and self.vlines[i, j + 1] is None and self.numstring[i * GRID_SIZE + (j + 1)] == 2:
-                return 'v', i, j + 1
+        chains = self.identify_chains()
+        for chain in chains:
+            chain_length = len(chain)
+            total_squares += chain_length
+            longest_chain_length = max(longest_chain_length, chain_length)
 
+        # Add any loose squares that can be played
+        for i in range(GRID_SIZE):
+            for j in range(GRID_SIZE):
+                if self.numstring[i * GRID_SIZE + j] == 3 and (i, j) not in chains:
+                    total_squares += 1
+
+        return max(longest_chain_length, total_squares)
+
+    def analyze_chain_structure(self, chain):
+        segments = []
+        segment = []
+        for i, j in chain:
+            segment.append((i, j))
+            # Check if the current square is a break point
+            if self.is_break_point(i, j, chain):
+                segments.append(segment)
+                segment = []
+        if segment:
+            segments.append(segment)
+        return segments
+
+    def evaluate_segments(self, segments):
+        best_score = float('inf')
+        best_segment = None
+        for segment in segments:
+            score = sum(self.numstring[i * GRID_SIZE + j] for i, j in segment)
+            if score < best_score and self.is_segment_safe_to_give(segment):
+                best_score = score
+                best_segment = segment
+        return best_segment
+
+    def find_move_for_square(self, i, j):
+        if i > 0 and self.hlines[i - 1, j] is None and self.numstring[(i - 1) * GRID_SIZE + j] == 2:
+            return 'h', i - 1, j
+        if i < GRID_SIZE - 1 and self.hlines[i + 1, j] is None and self.numstring[(i + 1) * GRID_SIZE + j] == 2:
+            return 'h', i + 1, j
+        if j > 0 and self.vlines[i, j - 1] is None and self.numstring[i * GRID_SIZE + (j - 1)] == 2:
+            return 'v', i, j - 1
+        if j < GRID_SIZE - 1 and self.vlines[i, j + 1] is None and self.numstring[i * GRID_SIZE + (j + 1)] == 2:
+            return 'v', i, j + 1
         return None
 
+    def find_move_to_give_chain(self, chain):
+        segments = self.analyze_chain_structure(chain)
+        optimal_segment = self.evaluate_chain_segments(segments)
+        for i, j in optimal_segment:
+            move = self.find_move_for_square(i, j)
+            if move:
+                return move
+        return None
+
+    def find_connected_segments(self, segment):
+        # Find the segments that are directly connected to the given segment
+        connected_segments = []
+        for i, j in segment:
+            # Check for connections to neighboring squares that are not in the current segment
+            for x, y in [(i - 1, j), (i + 1, j), (i, j - 1), (i, j + 1)]:
+                if (x, y) not in segment and self.is_connected(i, j, x, y):
+                    # Find the chain containing the connected square
+                    connected_chain = []
+                    self.find_chain(x, y, connected_chain, set())
+                    # Split the connected chain into segments
+                    connected_segments += self.analyze_chain_structure(connected_chain)
+        return connected_segments
+
+    def is_segment_safe_to_give(self, segment):
+        # Analyze the segment to find connected segments
+        connected_segments = self.find_connected_segments(segment)
+
+        # Check if giving away the current segment will expose any connected segment
+        for connected_segment in connected_segments:
+            if self.will_expose_segment(segment, connected_segment):
+                return False
+
+        # If no connected segments are exposed, the segment is safe to give
+        return True
+
+    def will_expose_segment(self, current_segment, connected_segment):
+        # Check if giving away the current segment will expose the connected segment to the opponent
+        # Copy the current game state to simulate the move
+        temp_hlines = self.hlines.copy()
+        temp_vlines = self.vlines.copy()
+        temp_numstring = self.numstring.copy()
+        for i, j in current_segment:
+            # Simulate the move for the current segment's square
+            move = self.find_move_for_square(i, j)
+            if move:
+                line_type, line_i, line_j = move
+                if line_type == 'h':
+                    temp_hlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
+                elif line_type == 'v':
+                    temp_vlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
+                # Update the numstring
+                temp_numstring[i * GRID_SIZE + j] += 1
+
+        # Check if the connected segment is exposed after simulating the move
+        for i, j in connected_segment:
+            if temp_numstring[i * GRID_SIZE + j] == 3:
+                return True
+        return False
+
+    def find_move_to_give_segment(self, segment):
+        for i, j in segment:
+            move = self.find_move_for_square(i, j)
+            if move:
+                return move
+        return None
     # Modified generate_optimal_move method
     def generate_optimal_move(self):
+        possible_squares = self.calculate_possible_squares()
+
         self.update_numstring()  # Update the numstring before deciding on a move
         available_lines = self.get_available_lines()
 
         # Identify chains
         chains = self.identify_chains()
         print("Identified chains with lengths:", [len(chain) for chain in chains])
+
+        # Analyze the chain structure and break into segments
+        segments = []
+        for chain in chains:
+            segments += self.analyze_chain_structure(chain)
+
+        # Evaluate segments based on length and safety
+        best_segment = self.evaluate_segments(segments)
+
+        # Find move to give the best segment
+        if best_segment:
+            give_move = self.find_move_to_give_segment(best_segment)
+            if give_move:
+                return [give_move]
 
         # Try to grab the longest chain
         best_grab_move = None
@@ -302,20 +441,14 @@ class Game:
             print("Making a move to grab the longest chain.")
             return [best_grab_move]
 
-        # Try to give the shortest chain that is "safe" (i.e., doesn't have a third side filled)
-        best_give_move = None
-        best_give_length = float('inf')
+        # Try to give the shortest chain that is "safe"
         for chain in chains:
             third_side_found = self.find_chain(*chain[0], [], set())
             if not third_side_found:
-                chain_length = len(chain)
-                if chain_length < best_give_length:
-                    best_give_length = chain_length
-                    best_give_move = self.find_move_to_give_chain(chain)
-
-        if best_give_move:
-            print(f"Making a move to give the shortest safe chain of length {best_give_length}.")
-            available_lines.remove(best_give_move)
+                give_move = self.find_move_to_give_chain(chain)
+                if give_move:
+                    print(f"Making a move to give the optimal segment of chain of length {len(chain)}.")
+                    return [give_move]
 
         optimal_moves = []
         risky_moves = []

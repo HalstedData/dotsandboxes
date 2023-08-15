@@ -315,7 +315,7 @@ class Game:
 
         if best_give_move:
             print(f"Making a move to give the shortest safe chain of length {best_give_length}.")
-            available_lines.remove(best_give_move)
+            return [best_give_move]
 
         optimal_moves = []
         risky_moves = []

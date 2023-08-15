@@ -20,7 +20,7 @@ LIGHT_GRAY = (200, 200, 200)
 PLAYER_COLORS = [RED, BLUE]
 
 class Game:
-    def __init__(self, human_turn=True):
+    def __init__(self, human_turn=False):
         self.current_player = 1
         self.hlines = np.full((GRID_SIZE + 1, GRID_SIZE), None)
         self.vlines = np.full((GRID_SIZE, GRID_SIZE + 1), None)
@@ -187,9 +187,29 @@ class Game:
 
         return False
 
+    def number_chain_lines(self, chain):
+        numbered_lines = []
+        for idx in range(len(chain) - 1):
+            i1, j1 = chain[idx]
+            i2, j2 = chain[idx + 1]
+
+            # Check horizontal connection
+            if i1 == i2 and abs(j1 - j2) == 1:
+                line_i = i1
+                line_j = min(j1, j2)
+                numbered_lines.append(('h', line_i, line_j))
+
+            # Check vertical connection
+            elif j1 == j2 and abs(i1 - i2) == 1:
+                line_i = min(i1, i2)
+                line_j = j1
+                numbered_lines.append(('v', line_i, line_j))
+
+        return numbered_lines
+
     def find_chain(self, i, j, chain, visited):
         if 0 <= i < GRID_SIZE and 0 <= j < GRID_SIZE and (i, j) not in visited and self.numstring[
-            i * GRID_SIZE + j] == 2:
+            i * GRID_SIZE + j] >= 2:
             chain.append((i, j))
             visited.add((i, j))
 
@@ -198,19 +218,40 @@ class Game:
                 if self.is_connected(i, j, x, y):  # Check connection between squares
                     self.find_chain(x, y, chain, visited)
 
-        return len(chain) > 1  # Return True if a chain (more than one square) is found
+        return len(chain) > 0  # Return True if a chain (including single square) is found
 
     def identify_chains(self):
         chains = []
         visited = set()  # To keep track of visited squares
         for i in range(GRID_SIZE):
             for j in range(GRID_SIZE):
-                if self.numstring[i * GRID_SIZE + j] == 2 and (i, j) not in visited:
+                if self.numstring[i * GRID_SIZE + j] >= 2 and (i, j) not in visited:
                     chain = []
                     found_chain = self.find_chain(i, j, chain, visited)
                     if found_chain:
                         chains.append(chain)
+
+                        # Check for special case: Two chains in a row
+                        for x, y in chain:
+                            # Check vertical connection
+                            if x + 1 < GRID_SIZE and self.numstring[(x + 1) * GRID_SIZE + y] >= 2 and \
+                                    self.hlines[x + 1, y] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x + 1, y, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
+                            # Check horizontal connection
+                            if y + 1 < GRID_SIZE and self.numstring[x * GRID_SIZE + (y + 1)] >= 2 and \
+                                    self.vlines[x, y + 1] is None:
+                                special_chain = []
+                                found_special_chain = self.find_chain(x, y + 1, special_chain, visited)
+                                if found_special_chain:
+                                    chains.append(special_chain)
+
         return chains
+
+
 
     def update_numstring(self):
         for i in range(GRID_SIZE):
@@ -224,30 +265,63 @@ class Game:
     def computer_turn(self):
         self.square_completed_last_turn = False  # Reset the variable at the start of the turn
         square_completed = True
+
         while square_completed and len(self.get_available_lines()) > 0:
             square_completed = False
             available_lines = self.get_available_lines()
             optimal_moves = self.generate_optimal_move()
 
             if optimal_moves:
+                print("Available lines:", self.get_available_lines())  # Debugging output
+
                 chosen_move = random.choice(optimal_moves)
-            else:
-                chosen_move = random.choice(available_lines)
+                if isinstance(chosen_move, list):  # If chosen_move is a list of moves
+                    print("Chosen moves to grab chain:", chosen_move)  # Debugging output
 
-            line_type, line_i, line_j = chosen_move
+                    for move in chosen_move:
+                        line_type, line_i, line_j = move
+                        print("Applying move:", line_type, line_i, line_j)  # Debugging output
 
-            if line_type == 'h':
-                self.hlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
-            elif line_type == 'v':
-                self.vlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
+                        if line_type == 'h':
+                            self.hlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
+                        elif line_type == 'v':
+                            self.vlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
 
-            square_completed = self.update_squares((line_i, line_j), line_type)
+                        square_completed = self.update_squares((line_i, line_j), line_type)
+                        if square_completed:
+                            self.square_completed_last_turn = True  # Record that a square was completed
+                    if not square_completed:
+                        break  # Exit the loop if no square was completed
+                        print("H-lines:", self.hlines)  # Debugging output
+                        print("V-lines:", self.vlines)  # Debugging output
+                else:
+                    line_type, line_i, line_j = chosen_move
+                    if line_type == 'h':
+                        self.hlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
+                    elif line_type == 'v':
+                        self.vlines[line_i, line_j] = PLAYER_COLORS[self.current_player - 1]
 
-        if not square_completed and not self.square_completed_last_turn:
+                    square_completed = self.update_squares((line_i, line_j), line_type)
+                    if square_completed:
+                        self.square_completed_last_turn = True  # Record that a square was completed
+                    else:
+                        break  # Exit the loop if no square was completed
+
+        # Switch the turn if no square was completed in the last turn
+        if not self.square_completed_last_turn:
             self.current_player = 2 if self.current_player == 1 else 1
             self.human_turn = True
 
     def find_move_to_grab_chain(self, chain):
+        if len(chain) >= 3:  # If the chain length is 3 or more
+            # Number the lines of the chain
+            numbered_lines = self.number_chain_lines(chain)
+            # Determine the lines to skip (last two lines)
+            lines_to_skip = len(numbered_lines) - 2
+            # Collect the lines except the ones to skip
+            lines_to_grab = [line for idx, line in enumerate(numbered_lines) if idx < lines_to_skip]
+            return lines_to_grab  # Return the list of lines to grab
+
         for i, j in chain:
             if i > 0 and self.hlines[i - 1, j] is None and self.numstring[(i - 1) * GRID_SIZE + j] == 3:
                 return 'h', i - 1, j
@@ -315,7 +389,7 @@ class Game:
 
         if best_give_move:
             print(f"Making a move to give the shortest safe chain of length {best_give_length}.")
-            available_lines.remove(best_give_move)
+            return [best_give_move]
 
         optimal_moves = []
         risky_moves = []
