@@ -414,6 +414,9 @@ function initializeGame(gridSize: number, humanTurn: boolean) {
   // Add event listener for canvas click
   canvas.addEventListener("click", handleCanvasClick);
   canvas.addEventListener("mousemove", handleCanvasMouseMove);
+  canvas.addEventListener("mouseout", () => {
+    game && (game.hoverLine = null);
+  });
 
   // Start the game loop
   gameLoop();
