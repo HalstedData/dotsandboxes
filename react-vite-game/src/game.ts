@@ -123,6 +123,7 @@ export class Game implements IGame {
         }
       }
     }
+    onPlay();
   }
 
   checkSquareCompletionH(i: number, j: number) {
@@ -295,7 +296,7 @@ export class Game implements IGame {
 
     const data = {
       hlines: this.hlines,
-      vlines: this.hlines,
+      vlines: this.vlines,
       gridSize: this.gridSize
     };
 
@@ -346,6 +347,7 @@ export class Game implements IGame {
       this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
       this.humanTurn = true;
     }
+    onPlay();
     this.waiting = false;
   }
 
@@ -356,6 +358,7 @@ export class Game implements IGame {
 let game: Game | null = null;
 let canvas: HTMLCanvasElement | null = null;
 let context: CanvasRenderingContext2D | null = null;
+let onPlay: () => void;
 // let gameStatusH2: HTMLElement | null = null;
 
 // Game initialization
@@ -444,7 +447,8 @@ function handleCanvasClick(event: { clientX: number; clientY: number; }) {
   game.updateLine(x, y);
 }
 
-export function startGame() {
+export function startGame(onPlayArg: () => void = onPlay) {
+  onPlay = onPlayArg;
   const gridSize = parseInt((<HTMLSelectElement>document.getElementById("grid-size")).value);
   const humanTurn = true; // Set the initial turn for the human player
   document.getElementById("options")!.style.display = "none"; // Hide the options section
@@ -465,7 +469,7 @@ function goHome() {
 export function setupGame() {
 
   // event handlers
-  document.getElementById("start-button")!.addEventListener("click", startGame);
+  document.getElementById("start-button")!.addEventListener("click", () => startGame());
   document.getElementById("reset-game")!.addEventListener("click", resetGame);
   document.getElementById("go-home")!.addEventListener("click", goHome);
 

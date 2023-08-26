@@ -295,7 +295,7 @@ class Game implements IGame {
 
     const data = {
       hlines: this.hlines,
-      vlines: this.hlines,
+      vlines: this.vlines,
       gridSize: this.gridSize
     };
 
