@@ -1,4 +1,4 @@
-import { GameState } from "./Game";
+import { ChosenMove, GameState } from "./Game";
 
 const SCREEN_SIZE = 600;
 const SCORE_AREA_HEIGHT = 100;
@@ -61,8 +61,8 @@ function checkSquareCompletionV(i: number, j: number, gameState: GameState) {
   };
 }
 
-function updateSquares(line: any[], lineType: string, gameState: GameState) {
-  const [lineI, lineJ] = line;
+export function updateSquares(move: ChosenMove, gameState: GameState) {
+  const [lineType, lineI, lineJ] = move;
   let squareCompleted = false;
   let squares;
   if (lineType === "h") {
@@ -74,14 +74,14 @@ function updateSquares(line: any[], lineType: string, gameState: GameState) {
   // console.log('current board', JSON.stringify({ verticalLines: vlines, horizontalLines: hlines }, null, 2));
   return {
     squareCompleted,
-    squares
+    squares: squares as GameState["squares"]
   };
 }
 
 
 type UpdateResponse = {
   squareCompleted: boolean;
-  updatedGameState: GameState,
+  updatedGameState: Omit<GameState, "opponent">,
 }
 
 export function updateLine(x: number, y: number, gameState: GameState): UpdateResponse {
@@ -129,13 +129,13 @@ export function updateLine(x: number, y: number, gameState: GameState): UpdateRe
     const [lineI, lineJ] = minLine;
     if (minType === "h") {
       hlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
-      ({ squareCompleted, squares } = updateSquares([lineI, lineJ], "h", gameState));
+      ({ squareCompleted, squares } = updateSquares(["h", lineI, lineJ], gameState));
       // if (!squareCompleted && !squareCompletedLastTurn) {
       //   currentPlayer = currentPlayer === 1 ? 2 : 1;
       // }
     } else if (minType === "v") {
       vlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
-      ({ squareCompleted, squares } = updateSquares([lineI, lineJ], "v", gameState));
+      ({ squareCompleted, squares } = updateSquares(["v", lineI, lineJ], gameState));
       // if (!squareCompleted && !squareCompletedLastTurn) {
       //   currentPlayer = currentPlayer === 1 ? 2 : 1;
       // }
@@ -148,7 +148,7 @@ export function updateLine(x: number, y: number, gameState: GameState): UpdateRe
       vlines: [...vlines],
       gridSize,
       currentPlayer,
-      squares: squares as any,
+      squares: squares as GameState["squares"],
     }
   }
 }

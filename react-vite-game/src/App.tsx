@@ -11,9 +11,9 @@ type GameInProgress = {
 function App() {
   const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
   const startGameHandler = () => {
-    const gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement).value);
-    const opponent = (document.getElementById("grid-size") as HTMLSelectElement).value as Opponent;
-    setGameInProgress({
+    const gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value) || gameInProgress?.gridSize;
+    const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent || gameInProgress?.opponent;
+    gridSize && setGameInProgress({
       gridSize,
       opponent
     });
@@ -40,7 +40,13 @@ function App() {
           </div>
         )
       }
-      {gameInProgress && <Game {...gameInProgress} onReset={() => { }} onGoHome={() => { }} />}
+      {gameInProgress && (
+        <Game
+          myPlayerId={1}
+          onReset={startGameHandler}
+          onGoHome={() => setGameInProgress(null)}
+          {...gameInProgress} />
+      )}
 
     </>
   )

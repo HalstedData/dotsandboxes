@@ -98,8 +98,9 @@ export function displayScores(context: CanvasRenderingContext2D, gameState: Game
     SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 - 10
   );
 
+  const opponentString = gameState.opponent === "computer" ? "Computer" : "Opponent";
   context.fillText(
-    `Computer: ${player2Score}`,
+    `${opponentString}: ${player2Score}`,
     20,
     SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 + 30
   );
