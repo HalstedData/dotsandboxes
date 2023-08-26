@@ -47,13 +47,6 @@ class Game:
 
         return square_completed, chain_length
 
-    def isGameOver(self):
-        for i in range(self.gridSize):
-            for j in range(self.gridSize):
-                if self.squares[i][j] == 0:
-                    return False
-        return True
-
     def checkSquareCompletionH(self, i, j):
         squareCompleted = False
         if (

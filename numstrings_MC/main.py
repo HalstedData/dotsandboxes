@@ -1,7 +1,7 @@
 import time
 import numpy as np
 import pygame
-from game_logic import Game, WINDOW_SIZE, SCREEN_SIZE, GRID_SIZE, WHITE
+from game_logic_more_adv import Game, WINDOW_SIZE, SCREEN_SIZE, GRID_SIZE, WHITE
 
 def main():
     pygame.init()
