@@ -24,7 +24,7 @@ interface IGame {
   getComputerMove: () => Promise<ChosenMove>;
 } 
 
-class Game implements IGame {
+export class Game implements IGame {
 
   gridSize: number;
   currentPlayer: number;
@@ -265,11 +265,11 @@ class Game implements IGame {
       20,
       SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 + 30
     );
-    const allLines = [...this.hlines, ...this.vlines].flat();
-    const noMovesPlayed = !allLines.filter(Boolean).length;
-    if (!noMovesPlayed) {
-      gameStatusH2!.textContent = this.humanTurn ? 'Your turn' : 'Computer turn';
-    }
+    // const allLines = [...this.hlines, ...this.vlines].flat();
+    // const noMovesPlayed = !allLines.filter(Boolean).length;
+    // if (!noMovesPlayed) {
+    //   gameStatusH2!.textContent = this.humanTurn ? 'Your turn' : 'Computer turn';
+    // }
   }
 
   getAvailableLines() {
@@ -303,7 +303,7 @@ class Game implements IGame {
 
     const { host } = window.location;
     const inDevMode = !host || host && ['127.0.0.1', 'localhost'].some(h => host.includes(h));
-    const requestHost = inDevMode && false ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
+    const requestHost = inDevMode && true ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
 
     const response = await fetch(
       `${requestHost}/get-computer-move`,
@@ -356,19 +356,17 @@ class Game implements IGame {
 let game: Game | null = null;
 let canvas: HTMLCanvasElement | null = null;
 let context: CanvasRenderingContext2D | null = null;
-let gameResultDiv: HTMLElement | null = null;
-let gameStatusH2: HTMLElement | null = null;
+// let gameStatusH2: HTMLElement | null = null;
 
 // Game initialization
-function initializeGame(gridSize: number, humanTurn: boolean) {
+function initializeGame(gridSize: number, humanTurn: boolean): Game {
   game = new Game(gridSize);
   canvas = <HTMLCanvasElement>document.getElementById("game-canvas");
   if (!canvas) {
     throw new Error('canvas not accessible');
   }
   context = canvas.getContext("2d");
-  gameResultDiv = document.getElementById("game-result");
-  gameStatusH2 = document.getElementById("game-status");
+  // gameStatusH2 = document.getElementById("game-status");
 
   // Set the canvas drawing surface size
   canvas.width = WINDOW_SIZE - SCORE_AREA_HEIGHT;
@@ -378,16 +376,15 @@ function initializeGame(gridSize: number, humanTurn: boolean) {
   canvas.style.width = `${WINDOW_SIZE - SCORE_AREA_HEIGHT}px`;
   canvas.style.height = `${WINDOW_SIZE}px`;
 
-  // Show the game section and hide the options section
-  document.getElementById("options")!.style.display = "none";
-  document.getElementById("game-section")!.style.display = "block";
-  gameStatusH2!.textContent = `Game on! ${humanTurn ? 'You start' : 'Computer starts!'}`;
+  // gameStatusH2!.textContent = `Game on! ${humanTurn ? 'You start' : 'Computer starts!'}`;
 
   // Add event listener for canvas click
   canvas.addEventListener("click", handleCanvasClick);
 
   // Start the game loop
   gameLoop();
+
+  return game;
 }
 
 // Start the game loop
@@ -403,22 +400,22 @@ function gameLoop() {
   if (game.isGameOver()) {
     game.gameOver = true;
     canvas.style.cursor = "default";
-    gameStatusH2!.textContent = '';
+    // gameStatusH2!.textContent = '';
 
-    // Determine the winner and update the game result div
-    let message = "";
-    const player1Score = game.squares.flat().filter((s) => s === 1).length;
-    const player2Score = game.squares.flat().filter((s) => s === 2).length;
+    // // Determine the winner and update the game result div
+    // let message = "";
+    // const player1Score = game.squares.flat().filter((s) => s === 1).length;
+    // const player2Score = game.squares.flat().filter((s) => s === 2).length;
 
-    if (player1Score > player2Score) {
-      message = "YOU WON!";
-    } else if (player1Score < player2Score) {
-      message = "YOU SUCK";
-    } else {
-      message = "It's a tie!";
-    }
+    // if (player1Score > player2Score) {
+    //   message = "YOU WON!";
+    // } else if (player1Score < player2Score) {
+    //   message = "YOU SUCK";
+    // } else {
+    //   message = "It's a tie!";
+    // }
 
-    gameStatusH2!.textContent = message;
+    // gameStatusH2!.textContent = message;
     // gameResultDiv.textContent = message;
 
     return;
@@ -450,14 +447,14 @@ function handleCanvasClick(event: { clientX: number; clientY: number; }) {
 export function startGame() {
   const gridSize = parseInt((<HTMLSelectElement>document.getElementById("grid-size")).value);
   const humanTurn = true; // Set the initial turn for the human player
-  initializeGame(gridSize, humanTurn);
   document.getElementById("options")!.style.display = "none"; // Hide the options section
   document.getElementById("game-section")!.style.display = "block"; // Show the game section
+  return initializeGame(gridSize, humanTurn);
 }
 
 function resetGame() {
   startGame();
-  gameResultDiv!.textContent = "";  // Clear the game result message
+  // gameResultDiv!.textContent = "";  // Clear the game result message
 }
 
 function goHome() {
