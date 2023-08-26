@@ -22,7 +22,7 @@ type ChosenMove = ['h' | 'v', number, number];
 
 interface IGame {
   getComputerMove: () => Promise<ChosenMove>;
-} 
+}
 
 export class Game implements IGame {
 
@@ -37,8 +37,9 @@ export class Game implements IGame {
   boxSize: number;
   numstring: any[];
   waiting: boolean;
+  opponent: "computer" | "human";
 
-  constructor(gridSize = 3) {
+  constructor(gridSize = 3, opponent: string) {
     this.currentPlayer = 1;
     this.gridSize = gridSize;
     this.hlines = Array.from({ length: this.gridSize + 1 }, () =>
@@ -56,6 +57,7 @@ export class Game implements IGame {
     this.boxSize = (SCREEN_SIZE - 40) / this.gridSize;
     this.numstring = Array(this.gridSize ** 2).fill(0);
     this.waiting = false;
+    this.opponent = opponent as "computer" | "human";
   }
 
   isGameOver() {
@@ -323,7 +325,6 @@ export class Game implements IGame {
 
 
   async computerTurn() {
-    this.waiting = true;
     await new Promise(resolve => setTimeout(resolve, 1000 * Math.random()));
     this.squareCompletedLastTurn = false;
     let squareCompleted = true;
@@ -362,8 +363,8 @@ let onPlay: () => void;
 // let gameStatusH2: HTMLElement | null = null;
 
 // Game initialization
-function initializeGame(gridSize: number, humanTurn: boolean): Game {
-  game = new Game(gridSize);
+function initializeGame(gridSize: number, opponent: string): Game {
+  game = new Game(gridSize, opponent);
   canvas = <HTMLCanvasElement>document.getElementById("game-canvas");
   if (!canvas) {
     throw new Error('canvas not accessible');
@@ -429,7 +430,8 @@ function gameLoop() {
     } else {
       // Computer player's turn
       canvas.style.cursor = "default";
-      !game.waiting && game.computerTurn();
+      game.opponent === "computer" && !game.waiting && game.computerTurn();
+      game.waiting = true;
     }
   }
 
@@ -450,10 +452,10 @@ function handleCanvasClick(event: { clientX: number; clientY: number; }) {
 export function startGame(onPlayArg: () => void = onPlay) {
   onPlay = onPlayArg;
   const gridSize = parseInt((<HTMLSelectElement>document.getElementById("grid-size")).value);
-  const humanTurn = true; // Set the initial turn for the human player
+  const opponent = (<HTMLSelectElement>document.getElementById("opponent")).value;
   document.getElementById("options")!.style.display = "none"; // Hide the options section
   document.getElementById("game-section")!.style.display = "block"; // Show the game section
-  return initializeGame(gridSize, humanTurn);
+  return initializeGame(gridSize, opponent);
 }
 
 function resetGame() {

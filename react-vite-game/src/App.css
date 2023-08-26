@@ -1,5 +1,5 @@
 #root, body {
-  margin: auto;
+  margin: 0 auto;
   padding: 0%;
   text-align: center;
   font-family: monospace;
@@ -16,7 +16,6 @@
 }
 
 #game-section {
-  display: none;
   text-align: center;
   box-sizing: border-box;
 }
