@@ -18,10 +18,10 @@ const PLAYER_COLORS = [RED, BLUE];
 
 type LineArray<T = string | null> = T[][];
 
-type ChosenMove = ['h' | 'v', number, number];
+type Line = ['h' | 'v', number, number];
 
 interface IGame {
-  getComputerMove: () => Promise<ChosenMove>;
+  getComputerMove: () => Promise<Line>;
 }
 
 export class Game implements IGame {
@@ -294,7 +294,7 @@ export class Game implements IGame {
     return availableLines;
   }
 
-  async getComputerMove(): Promise<ChosenMove> {
+  async getComputerMove(): Promise<Line> {
 
     const data = {
       hlines: this.hlines,
@@ -320,7 +320,7 @@ export class Game implements IGame {
       }
     ).then(r => r.json());
 
-    return response.computer_move as ChosenMove;
+    return response.computer_move as Line;
   }
 
 

@@ -1,8 +1,6 @@
-import { ChosenMove, GameState } from "./Game";
+import { Line, GameState } from "./Game";
 
 const SCREEN_SIZE = 600;
-const SCORE_AREA_HEIGHT = 100;
-const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 const RED = "#ff0000";
 const BLUE = "#0000ff";
 const PLAYER_COLORS = [RED, BLUE];
@@ -61,14 +59,14 @@ function checkSquareCompletionV(i: number, j: number, gameState: GameState) {
   };
 }
 
-export function updateSquares(move: ChosenMove, gameState: GameState) {
+export function updateSquares(move: Line, gameState: GameState) {
   const [lineType, lineI, lineJ] = move;
   let squareCompleted = false;
   let squares;
   if (lineType === "h") {
-    ({squareCompleted, squares } = checkSquareCompletionH(lineI, lineJ, gameState));
+    ({ squareCompleted, squares } = checkSquareCompletionH(lineI, lineJ, gameState));
   } else if (lineType === "v") {
-    ({squareCompleted, squares } = checkSquareCompletionV(lineI, lineJ, gameState));
+    ({ squareCompleted, squares } = checkSquareCompletionV(lineI, lineJ, gameState));
   }
 
   // console.log('current board', JSON.stringify({ verticalLines: vlines, horizontalLines: hlines }, null, 2));
@@ -78,15 +76,49 @@ export function updateSquares(move: ChosenMove, gameState: GameState) {
   };
 }
 
-
 type UpdateResponse = {
-  squareCompleted: boolean;
-  updatedGameState: Omit<GameState, "opponent">,
+  gameStateUpdates: Partial<GameState>,
 }
 
-export function updateLine(x: number, y: number, gameState: GameState): UpdateResponse {
+export function makeMove(move: Line, gameState: GameState): UpdateResponse {
+  const { hlines, vlines, currentPlayer, gridSize } = gameState;
+  const gameStateUpdates: Partial<GameState> = {};
+  let squareCompleted = false;
+  let squares;
+  const [minType, lineI, lineJ] = move;
+  if (minType === "h") {
+    hlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
+    gameStateUpdates.hlines = hlines;
+    ({ squareCompleted, squares } = updateSquares(["h", lineI, lineJ], gameState));
+  } else if (minType === "v") {
+    vlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
+    gameStateUpdates.vlines = vlines;
+    ({ squareCompleted, squares } = updateSquares(["v", lineI, lineJ], gameState));
+  }
+  return {
+    gameStateUpdates: {
+      ...gameStateUpdates,
+      ...squareCompleted ? {
+        squares: squares as GameState["squares"],
+        isGameOver: (() => {
+          for (let i = 0; i < gridSize; i++) {
+            for (let j = 0; j < gridSize; j++) {
+              if ((squares as GameState["squares"])[i][j] === 0) {
+                return false;
+              }
+            }
+          }
+          return true;
+        })(),
+      } : {
+        currentPlayer: currentPlayer === 1 ? 2 : 1,
+      }
+    }
+  }
+}
 
-  const { gridSize, hlines, vlines, currentPlayer } = gameState;
+export function getMoveFromXY(x: number, y: number, gameState: GameState): Line | null {
+  const { gridSize, hlines, vlines } = gameState;
   const boxSize = (SCREEN_SIZE - 40) / gridSize;
 
   let minDistance = Infinity;
@@ -104,7 +136,7 @@ export function updateLine(x: number, y: number, gameState: GameState): UpdateRe
       ) {
         minDistance = distanceH;
         minLine = [i, j];
-        minType = "h";
+        minType = "h" as Line[0];
       }
     }
 
@@ -118,37 +150,16 @@ export function updateLine(x: number, y: number, gameState: GameState): UpdateRe
       ) {
         minDistance = distanceV;
         minLine = [i, j];
-        minType = "v";
+        minType = "v" as Line[0];
       }
     }
   }
-
-  let squareCompleted = false;
-  let squares;
-  if (minLine !== null) {
-    const [lineI, lineJ] = minLine;
-    if (minType === "h") {
-      hlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
-      ({ squareCompleted, squares } = updateSquares(["h", lineI, lineJ], gameState));
-      // if (!squareCompleted && !squareCompletedLastTurn) {
-      //   currentPlayer = currentPlayer === 1 ? 2 : 1;
-      // }
-    } else if (minType === "v") {
-      vlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
-      ({ squareCompleted, squares } = updateSquares(["v", lineI, lineJ], gameState));
-      // if (!squareCompleted && !squareCompletedLastTurn) {
-      //   currentPlayer = currentPlayer === 1 ? 2 : 1;
-      // }
-    }
-  }
-  return {
-    squareCompleted,
-    updatedGameState: {
-      hlines: [...hlines],
-      vlines: [...vlines],
-      gridSize,
-      currentPlayer,
-      squares: squares as GameState["squares"],
-    }
-  }
+  return minLine && minType ? [minType, minLine[0], minLine[1]] : null;
 }
+
+export function makeMoveFromXY(x: number, y: number, gameState: GameState): UpdateResponse {
+  const move = getMoveFromXY(x, y, gameState);
+  return move ? makeMove(move, gameState) : { gameStateUpdates: {} };
+}
+
+
