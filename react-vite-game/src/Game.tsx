@@ -1,5 +1,5 @@
-import React, { useCallback, useEffect } from 'react';
-import { useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect } from 'react';
+import { useRef, useState } from 'react'
 import drawBoard from './draw-board';
 import { makeMove, makeMoveFromXY, } from './make-move';
 import getComputerMove from './get-computer-move';
