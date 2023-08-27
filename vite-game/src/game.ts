@@ -18,10 +18,10 @@ const PLAYER_COLORS = [RED, BLUE];
 
 type LineArray<T = string | null> = T[][];
 
-type ChosenMove = ['h' | 'v', number, number];
+type Line = ['h' | 'v', number, number];
 
 interface IGame {
-  getComputerMove: () => Promise<ChosenMove>;
+  getComputerMove: () => Promise<Line>;
 } 
 
 class Game implements IGame {
@@ -37,6 +37,7 @@ class Game implements IGame {
   boxSize: number;
   numstring: any[];
   waiting: boolean;
+  hoverLine: Line | null;
 
   constructor(gridSize = 3) {
     this.currentPlayer = 1;
@@ -56,6 +57,7 @@ class Game implements IGame {
     this.boxSize = (SCREEN_SIZE - 40) / this.gridSize;
     this.numstring = Array(this.gridSize ** 2).fill(0);
     this.waiting = false;
+    this.hoverLine = null;
   }
 
   isGameOver() {
@@ -69,8 +71,8 @@ class Game implements IGame {
     return true;
   }
 
+  getNearestLine(x: number, y: number): Line | null {
 
-  updateLine(x: number, y: number) {
     let minDistance = Infinity;
     let minLine = null;
     let minType = null;
@@ -104,19 +106,28 @@ class Game implements IGame {
         }
       }
     }
+    return minType && minLine ? [minType, ...minLine] as Line : null;
+  }
+  updateHoverLine(x: number, y: number) {
+    const nearestLine = this.getNearestLine(x, y);
+    // const [minType, lineI, lineJ] = nearestLine;
+    this.hoverLine = nearestLine;
+  }
 
-    if (minLine !== null) {
-      const [lineI, lineJ] = minLine;
+  updateLine(x: number, y: number) {
+    const nearestLine = this.getNearestLine(x, y);
+    if (nearestLine !== null) {
+      const [minType, lineI, lineJ] = nearestLine;
       if (minType === "h") {
         this.hlines[lineI][lineJ] = PLAYER_COLORS[this.currentPlayer - 1];
-        const squareCompleted = this.updateSquares([lineI, lineJ], "h");
+        const squareCompleted = this.updateSquares(["h", lineI, lineJ]);
         if (!squareCompleted && !this.squareCompletedLastTurn) {
           this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
           this.humanTurn = !this.humanTurn;
         }
       } else if (minType === "v") {
         this.vlines[lineI][lineJ] = PLAYER_COLORS[this.currentPlayer - 1];
-        const squareCompleted = this.updateSquares([lineI, lineJ], "v");
+        const squareCompleted = this.updateSquares(["v", lineI, lineJ]);
         if (!squareCompleted && !this.squareCompletedLastTurn) {
           this.currentPlayer = this.currentPlayer === 1 ? 2 : 1;
           this.humanTurn = !this.humanTurn;
@@ -171,8 +182,8 @@ class Game implements IGame {
     return squareCompleted;
   }
 
-  updateSquares(line: any[], lineType: string) {
-    const [lineI, lineJ] = line;
+  updateSquares(line: Line) {
+    const [lineType, lineI, lineJ] = line;
     let squareCompleted = false;
     if (lineType === "h") {
       squareCompleted = this.checkSquareCompletionH(lineI, lineJ);
@@ -206,24 +217,42 @@ class Game implements IGame {
     context.lineWidth = LINE_THICKNESS;
     for (let i = 0; i < this.gridSize + 1; i++) {
       for (let j = 0; j < this.gridSize; j++) {
-        const color = this.hlines[i][j] || LIGHT_GRAY;
+        const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["h", i, j]) && !this.hlines[i][j];
+        const color = this.hlines[i][j] || (isHoverLine && 'orange') || LIGHT_GRAY;
+        if (isHoverLine) {
+          context.globalAlpha = 0.4;
+        }
         context.strokeStyle = color;
+
+        // context.lineWidth = JSON.stringify(this.lastComputerLine) === JSON.stringify(["h", i, j]) ? 20 : 10;
         context.beginPath();
         context.moveTo(20 + j * this.boxSize, 20 + i * this.boxSize);
         context.lineTo(20 + (j + 1) * this.boxSize, 20 + i * this.boxSize);
         context.stroke();
+        if (isHoverLine) {
+          context.globalAlpha = 1;
+        }
       }
     }
 
     for (let i = 0; i < this.gridSize + 1; i++) {
       for (let j = 0; j < this.gridSize + 1; j++) {
         if (i < this.gridSize) {
-          const color = this.vlines[i][j] || LIGHT_GRAY;
+          const isHoverLine = JSON.stringify(this.hoverLine) === JSON.stringify(["v", i, j]) && !this.vlines[i][j];
+          const color = this.vlines[i][j] || (isHoverLine && 'orange') || LIGHT_GRAY;
           context.strokeStyle = color;
+          if (isHoverLine) {
+            context.globalAlpha = 0.4;
+          }
+          // const lineWidth = isHoverLine ? 20 : 10;
+          // context.lineWidth = lineWidth;
           context.beginPath();
           context.moveTo(20 + j * this.boxSize, 20 + i * this.boxSize);
           context.lineTo(20 + j * this.boxSize, 20 + (i + 1) * this.boxSize);
           context.stroke();
+          if (isHoverLine) {
+            context.globalAlpha = 1;
+          }
         }
         context.fillStyle = BLACK;
         context.beginPath();
@@ -272,26 +301,26 @@ class Game implements IGame {
     }
   }
 
-  getAvailableLines() {
+  getAvailableLines(): Line[] {
     const availableLines = [];
     for (let i = 0; i < this.gridSize + 1; i++) {
       for (let j = 0; j < this.gridSize; j++) {
         if (!this.hlines[i][j]) {
-          availableLines.push(["h", i, j]);
+          availableLines.push(["h", i, j] as Line);
         }
       }
     }
     for (let i = 0; i < this.gridSize; i++) {
       for (let j = 0; j < this.gridSize + 1; j++) {
         if (!this.vlines[i][j]) {
-          availableLines.push(["v", i, j]);
+          availableLines.push(["v", i, j] as Line);
         }
       }
     }
     return availableLines;
   }
 
-  async getComputerMove(): Promise<ChosenMove> {
+  async getComputerMove(): Promise<Line> {
 
     const data = {
       hlines: this.hlines,
@@ -303,7 +332,7 @@ class Game implements IGame {
 
     const { host } = window.location;
     const inDevMode = !host || host && ['127.0.0.1', 'localhost'].some(h => host.includes(h));
-    const requestHost = inDevMode && false ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
+    const requestHost = inDevMode && true ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
 
     const response = await fetch(
       `${requestHost}/get-computer-move`,
@@ -317,7 +346,7 @@ class Game implements IGame {
       }
     ).then(r => r.json());
 
-    return response.computer_move as ChosenMove;
+    return response.computer_move as Line;
   }
 
 
@@ -338,7 +367,7 @@ class Game implements IGame {
         this.vlines[lineI][lineJ] = PLAYER_COLORS[this.currentPlayer - 1];
       }
 
-      squareCompleted = this.updateSquares([lineI, lineJ], lineType);
+      squareCompleted = this.updateSquares([lineType, lineI, lineJ]);
       await new Promise(resolve => setTimeout(resolve, 2000 * Math.random()));
     }
 
@@ -385,6 +414,10 @@ function initializeGame(gridSize: number, humanTurn: boolean) {
 
   // Add event listener for canvas click
   canvas.addEventListener("click", handleCanvasClick);
+  canvas.addEventListener("mousemove", handleCanvasMouseMove);
+  canvas.addEventListener("mouseout", () => {
+    game && (game.hoverLine = null);
+  });
 
   // Start the game loop
   gameLoop();
@@ -434,6 +467,18 @@ function gameLoop() {
   }
 
   requestAnimationFrame(gameLoop);
+}
+
+// Event handlers
+function handleCanvasMouseMove(event: { clientX: number; clientY: number; }) {
+  if (!game || game.waiting || !canvas) {
+    return;
+  }
+  const rect = canvas.getBoundingClientRect();
+  const x = event.clientX - rect.left;
+  const y = event.clientY - rect.top;
+  console.log({ x, y })
+  game.updateHoverLine(x, y);
 }
 
 // Event handlers
