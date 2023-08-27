@@ -95,6 +95,7 @@ export function makeMove(move: Line, gameState: GameState): UpdateResponse {
     gameStateUpdates.vlines = vlines;
     ({ squareCompleted, squares } = updateSquares(["v", lineI, lineJ], gameState));
   }
+  console.log('cur', currentPlayer, 'next', currentPlayer === 1 ? 2 : 1, 'squareCompleted', squareCompleted);
   return {
     gameStateUpdates: {
       ...gameStateUpdates,
@@ -157,9 +158,9 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
   return minLine && minType ? [minType, minLine[0], minLine[1]] : null;
 }
 
-export function makeMoveFromXY(x: number, y: number, gameState: GameState): UpdateResponse {
+export function makeMoveFromXY(x: number, y: number, gameState: GameState): UpdateResponse & { move?: Line } {
   const move = getMoveFromXY(x, y, gameState);
-  return move ? makeMove(move, gameState) : { gameStateUpdates: {} };
+  return move ? { ...makeMove(move, gameState), move } : { gameStateUpdates: {} };
 }
 
 

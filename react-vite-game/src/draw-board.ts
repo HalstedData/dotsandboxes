@@ -1,4 +1,4 @@
-import { GameState } from "./Game";
+import { GameProps, GameState } from "./Game";
 
 // CONSTANTS
 const LINE_THICKNESS = 5;
@@ -37,7 +37,7 @@ export function fillBoxes(context: CanvasRenderingContext2D, gameState: GameStat
 
 
 export function drawLines(context: CanvasRenderingContext2D, gameState: GameState) {
-  fillBoxes(context, gameState);
+
   const { gridSize, hlines, vlines, } = gameState;
   const boxSize = (SCREEN_SIZE - 40) / gridSize;
   context.lineWidth = LINE_THICKNESS;
@@ -76,10 +76,10 @@ export function drawLines(context: CanvasRenderingContext2D, gameState: GameStat
   }
 }
 
-export function displayScores(context: CanvasRenderingContext2D, gameState: GameState) {
+export function displayScores(context: CanvasRenderingContext2D, gameState: GameState, gameProps: GameProps) {
   const { squares } = gameState;
-  const player1Score = squares.flat().filter((s) => s === 1).length;
-  const player2Score = squares.flat().filter((s) => s === 2).length;
+  const youScore = squares.flat().filter((s) => s === gameProps.myPlayerId).length;
+  const opponentScore = squares.flat().filter((s) => s !== gameProps.myPlayerId).length;
 
   context.font = "bold 24px sans-serif";
   context.fillStyle = BLACK;
@@ -93,30 +93,26 @@ export function displayScores(context: CanvasRenderingContext2D, gameState: Game
 
   context.fillStyle = BLACK;
   context.fillText(
-    `You: ${player1Score}`,
+    `You: ${youScore}`,
     20,
     SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 - 10
   );
 
   const opponentString = gameState.opponent === "computer" ? "Computer" : "Opponent";
   context.fillText(
-    `${opponentString}: ${player2Score}`,
+    `${opponentString}: ${opponentScore}`,
     20,
     SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 + 30
   );
-  // const allLines = [...hlines, ...vlines].flat();
-  // const noMovesPlayed = !allLines.filter(Boolean).length;
-  // if (!noMovesPlayed) {
-  //   gameStatusH2!.textContent = humanTurn ? 'Your turn' : 'Computer turn';
-  // }
 }
 
-export default function drawBoard(canvas: HTMLCanvasElement, gameState: GameState) {
+export default function drawBoard(canvas: HTMLCanvasElement, gameState: GameState, gameProps: GameProps) {
   const context = canvas.getContext("2d");
   if (!context) throw "No context what?";
 
   context.fillStyle = WHITE;
   context.fillRect(0, 0, WINDOW_SIZE, WINDOW_SIZE);
+  fillBoxes(context, gameState);
   drawLines(context, gameState);
-  displayScores(context, gameState);
+  displayScores(context, gameState, gameProps);
 }

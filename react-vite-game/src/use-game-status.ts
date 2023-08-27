@@ -1,18 +1,19 @@
 import { useMemo } from "react";
-import { GameState } from "./Game";
+import { GameProps, GameState } from "./Game";
 
-export default function useGameStatus(gameState: GameState, myMove: boolean) {
-  const { hlines, vlines, isGameOver, opponent, squares } = gameState;
+export default function useGameStatus(gameState: GameState, gameProps: GameProps) {
+  const { hlines, vlines, isGameOver, opponent, squares, currentPlayer} = gameState;
+  const myMove = currentPlayer === gameProps.myPlayerId;
   return useMemo<string>(() => {
     const allLines = [...hlines, ...vlines].flat();
     const noMovesPlayed = !allLines.filter(Boolean).length;
     const opponentString = opponent === "computer" ? "Computer" : "Opponent";
     if (isGameOver) {
-        const player1Score = squares.flat().filter((s) => s === 1).length;
-        const player2Score = squares.flat().filter((s) => s === 2).length;
-        if (player1Score > player2Score) {
+        const youScore = squares.flat().filter((s) => s === gameProps.myPlayerId).length;
+        const opponentScore = squares.flat().filter((s) => s !== gameProps.myPlayerId).length;
+        if (youScore > opponentScore) {
             return "YOU WON!";
-        } else if (player1Score < player2Score) {
+        } else if (youScore < opponentScore) {
             return "YOU SUCK";
         } else {
             return "It's a tie!";
