@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useState } from 'react'
 import './App.css'
 import Game from './Game';
 
@@ -9,11 +9,15 @@ type GameInProgress = {
 }
 
 function App() {
+  const [gameKey, setGameKey] = useState(0);
   const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
   const startGameHandler = () => {
-    const gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value) || gameInProgress?.gridSize;
-    const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent || gameInProgress?.opponent;
-    gridSize && setGameInProgress({
+    setGameKey(gameKey + 1);
+    const {
+      gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value),
+      opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent
+    } = gameInProgress || {};
+    setGameInProgress({
       gridSize,
       opponent
     });
@@ -23,7 +27,7 @@ function App() {
     <>
       <h1 id="game-title">Dots and Boxes</h1>
       {
-        !gameInProgress && (
+        !gameInProgress ? (
           <div id="options">
             <label htmlFor="grid-size">Grid Size:</label>
             <select id="grid-size">
@@ -38,15 +42,14 @@ function App() {
             </select><br />
             <button id="start-button" onClick={startGameHandler}>Start Game</button>
           </div>
-        )
-      }
-      {gameInProgress && (
-        <Game
-          myPlayerId={1}
-          onReset={startGameHandler}
-          onGoHome={() => setGameInProgress(null)}
-          {...gameInProgress} />
-      )}
+        ) : (
+          <Game
+            key={gameKey}
+            myPlayerId={1}
+            onReset={startGameHandler}
+            onGoHome={() => setGameInProgress(null)}
+            {...gameInProgress} />
+        )}
 
     </>
   )
