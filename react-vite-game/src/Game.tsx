@@ -4,26 +4,23 @@ import drawBoard from './draw-board';
 import { makeMove, makeMoveFromXY, } from './make-move';
 import getComputerMove from './get-computer-move';
 import useGameStatus from './use-game-status';
-import { GameSocket } from './App';
+import { GameInProgress, GameSocket } from './App';
 
-export type GameProps = {
-  gridSize: number;
-  opponent: 'computer' | 'human';
-  myPlayerId: number;
+export type GameProps = GameInProgress & {
   onReset: () => void;
   onGoHome: () => void;
   socket: GameSocket;
 }
 
-type LineArray<T = string | null> = T[][];
+type LineArray = (string | null)[][];
 
 export type Line = ['h' | 'v', number, number];
 
-export type GameState = Pick<GameProps, "gridSize" | "opponent"> & {
+export type GameState = Pick<GameProps, "gridSize"> & {
   hlines: LineArray;
   vlines: LineArray;
-  squares: LineArray<number>;
-  currentPlayer: number;
+  squares: LineArray;
+  currentPlayer: string;
   isGameOver: boolean;
 }
 
@@ -32,15 +29,15 @@ const SCORE_AREA_HEIGHT = 100;
 const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
 function Game(gameProps: GameProps) {
-  const { gridSize, opponent, onReset, onGoHome, myPlayerId, socket } = gameProps;
+  const { gridSize, playerStrings, onReset, onGoHome, myPlayerId, socket, gameId } = gameProps;
+  console.log({ gameProps })
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [gameState, setGameState] = useState<GameState>({
     gridSize,
-    opponent,
     hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
     vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
-    squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => 0)),
-    currentPlayer: 1,
+    squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
+    currentPlayer: playerStrings[0],
     isGameOver: false,
   });
   const myMove = gameState.currentPlayer === myPlayerId;
@@ -80,28 +77,34 @@ function Game(gameProps: GameProps) {
     const rect = canvasEl.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const { gameStateUpdates, move } = makeMoveFromXY(x, y, gameState);
+    const { gameStateUpdates, move } = makeMoveFromXY(x, y, gameState, gameProps.playerStrings);
     updateGameState(gameStateUpdates);
-    socket.emit('send-move', move as Line);
+    gameId && socket.emit('send-move', move as Line, gameId);
   };
 
-  const receiveMoveHandler = useCallback((move: Line) => {
+  const receiveMoveHandler = useCallback((move: Line, gameId: string) => {
+    console.log('receiv', gameId, gameProps.gameId)
+    if (gameId !== gameProps.gameId) {
+      return;
+    }
     console.log('receiving move cur player', gameState.currentPlayer);
-    debugger;
-    const { gameStateUpdates } = makeMove(move, gameState);
+    const { gameStateUpdates } = makeMove(move, gameState, gameProps.playerStrings);
     console.log('received move', move, gameStateUpdates);
     updateGameState(gameStateUpdates);
   }, [gameState]);
 
   useEffect(() => {
-    if (gameState.isGameOver || myMove || opponent !== 'computer') return;
-    // its time for a computer move!
-    (async function makeComputerMove() {
+    async function makeComputerMove() {
       console.log('ITS A COMPUTER MOVE')
       const chosenMove = await getComputerMove(gameState);
       await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 2000));
-      receiveMoveHandler(chosenMove);
-    })();
+      receiveMoveHandler(chosenMove, gameProps.gameId);
+    }
+
+    if (!gameState.isGameOver && gameState.currentPlayer === 'computer') {
+      // its time for a computer move!
+      makeComputerMove();
+    };
 
   }, [gameState]);
 

@@ -1,9 +1,6 @@
-import { Line, GameState } from "./Game";
+import { Line, GameState, GameProps } from "./Game";
 
 const SCREEN_SIZE = 600;
-const RED = "#ff0000";
-const BLUE = "#0000ff";
-const PLAYER_COLORS = [RED, BLUE];
 
 function checkSquareCompletionH(i: number, j: number, gameState: GameState) {
   const { hlines, vlines, squares, currentPlayer, gridSize } = gameState;
@@ -80,22 +77,23 @@ type UpdateResponse = {
   gameStateUpdates: Partial<GameState>,
 }
 
-export function makeMove(move: Line, gameState: GameState): UpdateResponse {
+export function makeMove(move: Line, gameState: GameState, playerStrings: string[]): UpdateResponse {
   const { hlines, vlines, currentPlayer, gridSize } = gameState;
   const gameStateUpdates: Partial<GameState> = {};
   let squareCompleted = false;
   let squares;
   const [minType, lineI, lineJ] = move;
+  const curPlayerIndex = playerStrings.indexOf(currentPlayer);
   if (minType === "h") {
-    hlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
+    hlines[lineI][lineJ] = currentPlayer;
     gameStateUpdates.hlines = hlines;
     ({ squareCompleted, squares } = updateSquares(["h", lineI, lineJ], gameState));
   } else if (minType === "v") {
-    vlines[lineI][lineJ] = PLAYER_COLORS[currentPlayer - 1];
+    vlines[lineI][lineJ] = currentPlayer;
     gameStateUpdates.vlines = vlines;
     ({ squareCompleted, squares } = updateSquares(["v", lineI, lineJ], gameState));
   }
-  console.log('cur', currentPlayer, 'next', currentPlayer === 1 ? 2 : 1, 'squareCompleted', squareCompleted);
+  console.log('cur', currentPlayer, 'next', playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1], 'squareCompleted', squareCompleted);
   return {
     gameStateUpdates: {
       ...gameStateUpdates,
@@ -104,7 +102,7 @@ export function makeMove(move: Line, gameState: GameState): UpdateResponse {
         isGameOver: (() => {
           for (let i = 0; i < gridSize; i++) {
             for (let j = 0; j < gridSize; j++) {
-              if ((squares as GameState["squares"])[i][j] === 0) {
+              if ((squares as GameState["squares"])[i][j] === null) {
                 return false;
               }
             }
@@ -112,7 +110,7 @@ export function makeMove(move: Line, gameState: GameState): UpdateResponse {
           return true;
         })(),
       } : {
-        currentPlayer: currentPlayer === 1 ? 2 : 1,
+        currentPlayer: playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1],
       }
     }
   }
@@ -158,9 +156,9 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
   return minLine && minType ? [minType, minLine[0], minLine[1]] : null;
 }
 
-export function makeMoveFromXY(x: number, y: number, gameState: GameState): UpdateResponse & { move?: Line } {
+export function makeMoveFromXY(x: number, y: number, gameState: GameState, playerStrings: string[]): UpdateResponse & { move?: Line } {
   const move = getMoveFromXY(x, y, gameState);
-  return move ? { ...makeMove(move, gameState), move } : { gameStateUpdates: {} };
+  return move ? { ...makeMove(move, gameState, playerStrings), move } : { gameStateUpdates: {} };
 }
 
 

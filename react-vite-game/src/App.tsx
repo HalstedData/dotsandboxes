@@ -4,58 +4,72 @@ import Game, { Line } from './Game';
 import { Socket, io } from "socket.io-client";
 
 type Opponent = 'computer' | 'human';
-type GameInProgress = {
-  gridSize: number;
-  opponent: Opponent;
+export type GameInProgress = Omit<GameOnResponse, 'yourPlayerId'> & {
+  myPlayerId: string;
 }
 
 type GameOnResponse = {
-  id: string;
-  yourPlayerId: number;
+  gameId: string;
+  yourPlayerId: string;
   gridSize: number;
+  playerStrings: string[];
 };
 
 type GameRequestResponse = GameOnResponse | 'waiting';
 
 type ClientToServerEvents = {
   "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
-  "send-move": (move: Line) => void;
+  "send-move": (move: Line, gameId: string) => void;
 }
 type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
-  "receive-move": (move: Line) => void;
+  "receive-move": (move: Line, gameId: string) => void;
 }
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
+const socket: GameSocket = io("http://localhost:3003", { transports: ['websocket'] });
 
 function App() {
-  const [socket] = useState<GameSocket>(io("http://localhost:3003", { transports: ['websocket'] }));
   const [gameKey, setGameKey] = useState(0);
   const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
   const [socketStatus, setSocketStatus] = useState('');
-  const [myPlayerId, setMyPlayerId] = useState<number>(1);
 
 
-  const handleGameOnResponse = (response: Exclude<GameRequestResponse, string>) => {
-    setMyPlayerId(response.yourPlayerId);
+  const handleGameOnResponse = ({
+    gameId,
+    yourPlayerId,
+    gridSize,
+    playerStrings
+  }: Exclude<GameRequestResponse, string>) => {
+    console.log({
+
+      gameId,
+      yourPlayerId,
+      gridSize,
+      playerStrings
+    }, 'handling')
     setGameInProgress({
-      gridSize: response.gridSize,
-      opponent: 'human'
+      gameId,
+      gridSize,
+      playerStrings,
+      myPlayerId: yourPlayerId,
     });
     setSocketStatus('');
+    setGameKey(gameKey => gameKey + 1);
   }
 
   const startGameHandler = () => {
-    setGameKey(gameKey + 1);
+    setGameKey(gameKey => gameKey + 1);
     const {
       gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value),
-      opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent
     } = gameInProgress || {};
+    const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent;
     if (opponent === 'computer') {
-      setMyPlayerId(1);
       setGameInProgress({
+        gameId: '343',
+        myPlayerId: 'you',
         gridSize,
-        opponent
+        playerStrings: ['you', 'computer']
       });
     } else {
       socket.emit('game-request', gridSize, response => {
@@ -106,7 +120,6 @@ function App() {
           <Game
             socket={socket}
             key={gameKey}
-            myPlayerId={myPlayerId}
             onReset={startGameHandler}
             onGoHome={() => setGameInProgress(null)}
             {...gameInProgress} />
