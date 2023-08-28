@@ -27,7 +27,10 @@ type ServerToClientEvents = {
 }
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-const socket: GameSocket = io("http://localhost:3003", { transports: ['websocket'] });
+const socket: GameSocket = io(
+  window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
+  { transports: ['websocket'] }
+);
 
 function App() {
   const [gameKey, setGameKey] = useState(0);
