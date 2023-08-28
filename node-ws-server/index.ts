@@ -95,11 +95,11 @@ io.on('connection', socket => {
     const gameInProgress = gamesInProgress[gameId];
 
     if (!gameInProgress) {
-      console.error("Invalid gameId.  Game not found.");
+      return console.error("Invalid gameId.  Game not found.");
     }
     const { gameStateUpdates } = makeMove(move, gameInProgress, gameInProgress.playerStrings);
     if (!Object.values(gameStateUpdates).length) {
-      console.error("Invalid move.  I don't think that was a legit move.");
+      return console.error("Invalid move.  I don't think that was a legit move.");
     }
     const nextGameState: ServerGameState = {
       ...gamesInProgress[gameId],
