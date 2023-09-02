@@ -1,6 +1,6 @@
 import fs from 'fs';
 import { UserAuth, UserInfo } from "../commonts/types";
-import { v4 as uuidv4 } from 'uuid';
+import * as uuid from 'uuid';
 
 export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | null> {
   console.log(`validating ${JSON.stringify(userAuth)}`);
@@ -8,6 +8,10 @@ export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | n
   try {
     foundUser = fs.readFileSync(`./json/users/${userAuth.userID}.json`, 'utf8');
   } catch (e) {
+    console.error('user not found');
+    return null;
+  }
+  if (!foundUser) {
     console.error('user not found');
     return null;
   }
@@ -22,8 +26,8 @@ export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | n
 
 export async function createNewUser(): Promise<UserInfo> {
   const userInfo: UserInfo = {
-   userID: uuidv4(),
-   authToken: uuidv4(),
+   userID: uuid.v4(),
+   authToken: uuid.v4(),
    score: 100,
   };
   fs.writeFileSync(`./json/users/${userInfo.userID}.json`, JSON.stringify(userInfo, null, 2), 'utf8');

@@ -21,7 +21,7 @@ export type ClientToServerEvents = {
 export type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
   "receive-move": (move: Line, gameId: string) => void;
-  "user-auth": (userAuth: UserAuth) => void;
+  "user-info": (userInfo: UserInfo) => void;
 }
 
 
@@ -42,11 +42,30 @@ export type GameState = {
 
 
 
+
+
+
+
+// v2
+
+export type GameV2Meta = {
+  gameId: string;
+  gridSize: number;
+  playerStrings: string[];
+};
+
+export type GameStateV2 = {
+  hlines: LineArray;
+  vlines: LineArray;
+  squares: LineArray;
+  currentPlayer: string;
+  isGameOver: boolean;
+}
+
+
 export type GameV2<CustomInfo = {}> = {
-  info: CustomInfo & {
-    gameId: string;
-    gridSize: number;
-    playerStrings: string[];
-  },
+  info: GameV2Meta & CustomInfo;
   state: GameState;
 }
+
+export type ClientGameV2 = GameV2<{ myPlayerId: string }>;

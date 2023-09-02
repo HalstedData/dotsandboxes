@@ -29,7 +29,7 @@ const newGame = (params: NewGameParams) => {
   return id;
 };
 
-const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo & UserAuth>({
+const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo>({
   cors: {
     origin: "http://localhost:5173",
     methods: ["GET", "POST"]
@@ -51,12 +51,10 @@ io.use(async (socket, next) => {
 
 io.on('connection', socket => {
   console.log('new connection', socket.data);
-  const userAuth: UserAuth = {
-    userID: socket.data.userID,
-    authToken: socket.data.authToken
-  };
-  console.log(userAuth);
-  socket.emit('user-auth', userAuth);
+  const emitUserInfo = () =>
+    socket.emit('user-info', socket.data);
+  emitUserInfo();
+  socket.emit('user-info', socket.data);
   socket.on('game-request', (gridSize, cb) => {
 
     const waiting = waitingRooms.get(gridSize) || [];
@@ -110,7 +108,8 @@ io.on('connection', socket => {
     if (nextGameState.isGameOver) {
       console.log('GAME OVER');
       fs.writeFileSync(`./game-${gameId}.json`, JSON.stringify(nextGameState, null, 2));
-      function startNewGameWithSameSettings() {
+
+      const startNewGameWithSameSettings = () => {
         delete gamesInProgress[gameId];
         const newGameId = newGame({
           gridSize,
@@ -124,7 +123,8 @@ io.on('connection', socket => {
             playerStrings,
           }));
         });
-      }
+      };
+
       setTimeout(startNewGameWithSameSettings, 4000);
 
 

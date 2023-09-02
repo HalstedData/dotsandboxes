@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket, io } from "socket.io-client";
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserInfo } from '../../commonts/types';
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 // import { GameOnResponse } from '@backend/types';
 
 type Opponent = 'computer' | 'human';
@@ -21,6 +21,7 @@ function App() {
   const [gameKey, setGameKey] = useState(0);
   const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
   const [socketStatus, setSocketStatus] = useState('');
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
 
   const handleGameOnResponse = ({
@@ -72,10 +73,14 @@ function App() {
   };
 
   function connectSocket() {
-    const userInfo = localStorage.getItem("dotsandboxesuserinfo");
+    const userInfo = localStorage.getItem("dabui"); // dots and boxes user auth
     if (userInfo) {
       const parsed = JSON.parse(userInfo) as UserInfo;
-      socket.auth = parsed;
+      const userAuth: UserAuth = {
+        userID: parsed.userID,
+        authToken: parsed.authToken
+      };
+      socket.auth = userAuth;
     }
     socket.connect();
   }
@@ -85,8 +90,10 @@ function App() {
       console.log('game on', response);
       handleGameOnResponse(response);
     });
-    socket.on('user-auth', (userAuth) => {
-      localStorage.setItem("dotsandboxesuserinfo", JSON.stringify(userAuth));
+    socket.on('user-info', (userInfo) => {
+      console.log(`setting user-info`, userInfo);
+      setUserInfo(userInfo);
+      localStorage.setItem("dotsandboxesuserinfo", JSON.stringify(userInfo));
     });
     connectSocket();
   }, []);
