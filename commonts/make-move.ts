@@ -132,7 +132,7 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
         distanceH < minDistance
       ) {
         minDistance = distanceH;
-        minLine = ["h", i, i];
+        minLine = ["h", i, j];
       }
     }
 
@@ -145,7 +145,7 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
         distanceV < minDistance
       ) {
         minDistance = distanceV;
-        minLine = ["v", i, i];
+        minLine = ["v", i, j];
       }
     }
   }
@@ -154,6 +154,7 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
 
 export function makeMoveFromXY(x: number, y: number, gameState: GameState, playerStrings: string[]): UpdateResponse & { move?: Line } {
   const move = getMoveFromXY(x, y, gameState);
+  console.log(JSON.stringify({x,y, move}))
   return move ? { ...makeMove(move, gameState, playerStrings), move } : { gameStateUpdates: {} };
 }
 
