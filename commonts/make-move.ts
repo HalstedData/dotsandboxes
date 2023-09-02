@@ -1,4 +1,4 @@
-import { Line, GameState, GameProps } from "./Game";
+import { GameState, Line } from "./types";
 
 const SCREEN_SIZE = 600;
 
@@ -121,9 +121,7 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
   const boxSize = (SCREEN_SIZE - 40) / gridSize;
 
   let minDistance = Infinity;
-  let minLine = null;
-  let minType = null;
-
+  let minLine: Line | null = null;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
       const midH = [j * boxSize + boxSize / 2, i * boxSize];
@@ -134,8 +132,7 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
         distanceH < minDistance
       ) {
         minDistance = distanceH;
-        minLine = [i, j];
-        minType = "h" as Line[0];
+        minLine = ["h", i, i];
       }
     }
 
@@ -148,12 +145,11 @@ export function getMoveFromXY(x: number, y: number, gameState: GameState): Line 
         distanceV < minDistance
       ) {
         minDistance = distanceV;
-        minLine = [i, j];
-        minType = "v" as Line[0];
+        minLine = ["v", i, i];
       }
     }
   }
-  return minLine && minType ? [minType, minLine[0], minLine[1]] : null;
+  return minLine || null;
 }
 
 export function makeMoveFromXY(x: number, y: number, gameState: GameState, playerStrings: string[]): UpdateResponse & { move?: Line } {

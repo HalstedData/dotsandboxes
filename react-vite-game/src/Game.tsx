@@ -1,27 +1,16 @@
 import { useCallback, useEffect } from 'react';
 import { useRef, useState } from 'react'
 import drawBoard from './draw-board';
-import { makeMove, makeMoveFromXY, } from './make-move';
+import { makeMove, makeMoveFromXY, } from '../../commonts/make-move';
 import getComputerMove from './get-computer-move';
 import useGameStatus from './use-game-status';
 import { GameInProgress, GameSocket } from './App';
+import { GameState, Line } from '../../commonts/types';
 
 export type GameProps = GameInProgress & {
   onReset: () => void;
   onGoHome: () => void;
   socket: GameSocket;
-}
-
-type LineArray = (string | null)[][];
-
-export type Line = ['h' | 'v', number, number];
-
-export type GameState = Pick<GameProps, "gridSize"> & {
-  hlines: LineArray;
-  vlines: LineArray;
-  squares: LineArray;
-  currentPlayer: string;
-  isGameOver: boolean;
 }
 
 const SCREEN_SIZE = 600;

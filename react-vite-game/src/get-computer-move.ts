@@ -1,4 +1,4 @@
-import { GameState, Line } from "./Game";
+import { GameState, Line } from "../../commonts/types";
 
 export default async function getComputerMove({ hlines, vlines, gridSize }: GameState): Promise<Line> {
 

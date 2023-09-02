@@ -1,22 +1,14 @@
 import fs from 'fs';
 import { Server } from 'socket.io';
-import { GameProps, GameState, Line } from '../react-vite-game/src/Game';
-import { v4 as uuidv4 } from 'uuid';
-import { makeMove } from '../react-vite-game/src/make-move';
+import { v4 as uuidv4, validate } from 'uuid';
+import { makeMove } from '../commonts/make-move';
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameState, Line, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
+import { createNewUser, validateUserAuth } from './users';
 
-
-type GameOnResponse = {
-  gameId: string;
-  yourPlayerId: string;
-  gridSize: number;
-  playerStrings: string[];
-};
-
-type GameRequestResponse = GameOnResponse | 'waiting';
 
 const waitingRooms: Map<number, string[]> = new Map();
 
-type ServerGameState = GameState & Pick<GameProps, 'playerStrings'>;
+type ServerGameState = GameState & Pick<GameOnResponse, 'playerStrings'>;
 
 const gamesInProgress: Record<string, ServerGameState> = {};
 
@@ -37,36 +29,42 @@ const newGame = (params: NewGameParams) => {
   return id;
 };
 
-
-type ClientToServerEvents = {
-  "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
-  "send-move": (move: Line, gameId: string) => void;
-}
-type ServerToClientEvents = {
-  "game-on": (response: GameRequestResponse) => void;
-  "receive-move": (move: Line, gameId: string) => void;
-}
-const io = new Server<ClientToServerEvents, ServerToClientEvents>({
+const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo & UserAuth>({
   cors: {
     origin: "http://localhost:5173",
     methods: ["GET", "POST"]
   }
 });
+
+io.use(async (socket, next) => {
+  // const { userID = uuidv4(), authToken = uuidv4() } = socket.handshake.auth;
+  const userAuth = socket.handshake.auth as UserAuth;
+  let userInfo = await validateUserAuth(userAuth);
+  if (!userInfo) {
+    console.log('userinfo not found');
+    userInfo = await createNewUser();
+    console.log(userInfo, 'userinfo created');
+  }
+  Object.assign(socket.data, userInfo);
+  next();
+});
+
 io.on('connection', socket => {
-  console.log('new connection', socket.id);
+  console.log('new connection', socket.data);
+  const userAuth: UserAuth = {
+    userID: socket.data.userID,
+    authToken: socket.data.authToken
+  };
+  console.log(userAuth);
+  socket.emit('user-auth', userAuth);
   socket.on('game-request', (gridSize, cb) => {
 
     const waiting = waitingRooms.get(gridSize) || [];
-    const returnToWaitingRoom = () => {
-      waitingRooms.set(gridSize, [...waiting, socket.id]);
-      return cb('waiting');
-    };
-
-    console.log(waitingRooms);
     const playerToMatch = waiting.shift();
     const playerToMatchSocket = playerToMatch && io.sockets.sockets.get(playerToMatch);
     if (!playerToMatch || !playerToMatchSocket) {
-      return returnToWaitingRoom();
+      waitingRooms.set(gridSize, [...waiting, socket.id]);
+      return cb('waiting');
     }
     const playerStrings = [playerToMatch, socket.id];
     const newGameId = newGame({

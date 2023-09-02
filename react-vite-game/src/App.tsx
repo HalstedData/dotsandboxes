@@ -1,35 +1,20 @@
 import { useEffect, useState } from 'react'
 import './App.css'
-import Game, { Line } from './Game';
+import Game from './Game';
 import { Socket, io } from "socket.io-client";
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserInfo } from '../../commonts/types';
+// import { GameOnResponse } from '@backend/types';
 
 type Opponent = 'computer' | 'human';
 export type GameInProgress = Omit<GameOnResponse, 'yourPlayerId'> & {
   myPlayerId: string;
 }
 
-type GameOnResponse = {
-  gameId: string;
-  yourPlayerId: string;
-  gridSize: number;
-  playerStrings: string[];
-};
-
-type GameRequestResponse = GameOnResponse | 'waiting';
-
-type ClientToServerEvents = {
-  "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
-  "send-move": (move: Line, gameId: string) => void;
-}
-type ServerToClientEvents = {
-  "game-on": (response: GameOnResponse) => void;
-  "receive-move": (move: Line, gameId: string) => void;
-}
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
 const socket: GameSocket = io(
   window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
-  { transports: ['websocket'] }
+  { transports: ['websocket'], autoConnect: false }
 );
 
 function App() {
@@ -86,11 +71,24 @@ function App() {
     }
   };
 
+  function connectSocket() {
+    const userInfo = localStorage.getItem("dotsandboxesuserinfo");
+    if (userInfo) {
+      const parsed = JSON.parse(userInfo) as UserInfo;
+      socket.auth = parsed;
+    }
+    socket.connect();
+  }
+
   useEffect(() => {
     socket.on('game-on', response => {
       console.log('game on', response);
       handleGameOnResponse(response);
     });
+    socket.on('user-auth', (userAuth) => {
+      localStorage.setItem("dotsandboxesuserinfo", JSON.stringify(userAuth));
+    });
+    connectSocket();
   }, []);
 
   return (

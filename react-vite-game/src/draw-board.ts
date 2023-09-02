@@ -1,4 +1,5 @@
-import { GameProps, GameState } from "./Game";
+import { GameState } from "../../commonts/types";
+import { GameProps } from "./Game";
 
 // CONSTANTS
 const LINE_THICKNESS = 5;
