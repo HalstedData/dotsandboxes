@@ -1,31 +1,35 @@
 import fs from 'fs';
-import { Server } from 'socket.io';
+import { Server, Socket } from 'socket.io';
 import { v4 as uuidv4, validate } from 'uuid';
-import { makeMove } from '../commonts/make-move';
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameState, Line, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
+import { applyLine } from '../commonts/make-move';
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameV2, Line, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
 import { createNewUser, validateUserAuth } from './users';
 
 
 const waitingRooms: Map<number, string[]> = new Map();
 
-type ServerGameState = GameState & Pick<GameOnResponse, 'playerStrings'>;
-
-const gamesInProgress: Record<string, ServerGameState> = {};
-
-type NewGameParams = Pick<ServerGameState, 'gridSize' | 'playerStrings'>;
+const gamesInProgress: Record<GameV2["meta"]["gameId"], GameV2> = {};
+type NewGameParams = Pick<GameV2["meta"], 'gridSize' | 'playerStrings'>;
 
 const newGame = (params: NewGameParams) => {
   const { gridSize, playerStrings } = params;
   const id = uuidv4();
-  gamesInProgress[id] = {
-    gridSize,
-    hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
-    vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
-    squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-    currentPlayer: playerStrings[0],
-    isGameOver: false,
-    playerStrings,
+  const gameV2: GameV2 = {
+    meta: {
+      gameId: id,
+      gridSize,
+      playerStrings,
+      moveOrder: [],
+    },
+    state: {
+      hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
+      vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
+      squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
+      currentPlayer: playerStrings[0],
+      isGameOver: false,
+    }
   };
+  gamesInProgress[id] = gameV2;
   return id;
 };
 
@@ -49,42 +53,64 @@ io.use(async (socket, next) => {
   next();
 });
 
+
+
+const userIDsToSockets: Record<string, Socket["id"][]> = {};
+
+
+
 io.on('connection', socket => {
   console.log('new connection', socket.data);
-  const emitUserInfo = () =>
-    socket.emit('user-info', socket.data);
+  const emitUserInfo = () => {
+    const userInfo = socket.data;
+    userIDsToSockets[userInfo.userID] = [
+      ...(userIDsToSockets[userInfo.userID] || [])
+        .filter(compareSocket => compareSocket !== socket.id),
+      socket.id,
+    ];
+    socket.emit('user-info', userInfo);
+  };
   emitUserInfo();
-  socket.emit('user-info', socket.data);
-  socket.on('game-request', (gridSize, cb) => {
 
-    const waiting = waitingRooms.get(gridSize) || [];
+  socket.on('game-request', (gridSize, cb) => {
+    const { userID } = socket.data;
+    const waiting = (waitingRooms.get(gridSize) || [])
+      .filter(userWaiting => userWaiting !== userID);
     const playerToMatch = waiting.shift();
-    const playerToMatchSocket = playerToMatch && io.sockets.sockets.get(playerToMatch);
-    if (!playerToMatch || !playerToMatchSocket) {
-      waitingRooms.set(gridSize, [...waiting, socket.id]);
+    const matchingSocketIds = playerToMatch ? userIDsToSockets[playerToMatch] : [];
+    const matchingSockets = matchingSocketIds
+      .map(socketId => io.sockets.sockets.get(socketId));
+
+    if (!playerToMatch || !matchingSockets.length) {
+      waitingRooms.set(gridSize, [...waiting, userID]);
+      console.log({ waiting, matchingSocketIds, playerToMatch });
       return cb('waiting');
     }
-    const playerStrings = [playerToMatch, socket.id];
+    const playerStrings = [playerToMatch, userID];
     const newGameId = newGame({
       gridSize,
       playerStrings,
     });
-    playerToMatchSocket.emit('game-on', ({
-      gameId: newGameId,
-      yourPlayerId: playerToMatch,
-      gridSize,
-      playerStrings,
-    }));
+    matchingSockets.forEach(playerSocket => {
+      // console.log({ playerSocket });
+      playerSocket?.emit('game-on', ({
+        gameId: newGameId,
+        // yourPlayerId: playerToMatch,
+        gridSize,
+        playerStrings,
+      }));
+    });
     cb({
       gameId: newGameId,
-      yourPlayerId: socket.id,
+      // yourPlayerId: socket.id,
       gridSize,
       playerStrings,
     });
 
 
   });
-  socket.on('send-move', (move, gameId) => {
+  socket.on('send-line', (move, gameId) => {
+    const { userID } = socket.data;
     // amount of times called 50x / 1 min ?
     // more than once in a half a second
 
@@ -93,21 +119,12 @@ io.on('connection', socket => {
     if (!gameInProgress) {
       return console.error("Invalid gameId.  Game not found.");
     }
-    const { gameStateUpdates } = makeMove(move, gameInProgress, gameInProgress.playerStrings);
-    if (!Object.values(gameStateUpdates).length) {
-      return console.error("Invalid move.  I don't think that was a legit move.");
-    }
-    const nextGameState: ServerGameState = {
-      ...gamesInProgress[gameId],
-      ...gameStateUpdates,
-    };
-    gamesInProgress[gameId] = nextGameState;
+    const nextGame = applyLine(move, gameInProgress);
+    const { gridSize, playerStrings } = gameInProgress.meta;
 
-    const { gridSize, playerStrings } = gameInProgress;
-
-    if (nextGameState.isGameOver) {
+    if (nextGame.state.isGameOver) {
       console.log('GAME OVER');
-      fs.writeFileSync(`./game-${gameId}.json`, JSON.stringify(nextGameState, null, 2));
+      fs.writeFileSync(`./game-${gameId}.json`, JSON.stringify(nextGame, null, 2));
 
       const startNewGameWithSameSettings = () => {
         delete gamesInProgress[gameId];
@@ -115,14 +132,18 @@ io.on('connection', socket => {
           gridSize,
           playerStrings,
         });
-        playerStrings.forEach(socketId => {
-          io.sockets.sockets.get(socketId)?.emit('game-on', ({
+        const matchingSockets = playerStrings
+          .map(playerUserID =>
+            userIDsToSockets[playerUserID].map(socketId => io.sockets.sockets.get(socketId)))
+          .flat();
+
+        matchingSockets.forEach(playerSocket =>
+          playerSocket?.emit('game-on', {
             gameId: newGameId,
-            yourPlayerId: socketId,
             gridSize,
             playerStrings,
           }));
-        });
+
       };
 
       setTimeout(startNewGameWithSameSettings, 4000);
@@ -143,12 +164,12 @@ io.on('connection', socket => {
     // if the move is already taken
 
     // if it is valid then send it to all the other players in the room
-    const socketIdsToSendTo = playerStrings.filter(playerString => playerString !== socket.id);
-    socketIdsToSendTo.forEach(socketId => {
-      io.to(socketId).emit('receive-move', move, gameId);
-    });
-    console.log({ socketIdsToSendTo })
-
+    const matchingSockets = playerStrings
+      .filter(playerUserId => playerUserId !== userID)
+      .map(playerUserID =>
+        userIDsToSockets[playerUserID].map(socketId => io.sockets.sockets.get(socketId)))
+      .flat();
+    matchingSockets.forEach(playerSocket => playerSocket?.emit('receive-line', move, gameId));
 
   });
 });

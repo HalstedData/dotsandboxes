@@ -1,4 +1,4 @@
-import { GameState } from "../../commonts/types";
+import { ClientGameV2, GameState } from "../../commonts/types";
 import { GameProps } from "./Game";
 
 // CONSTANTS
@@ -17,15 +17,16 @@ const PLAYER_COLORS = [RED, BLUE];
 
 
 
-export function fillBoxes(context: CanvasRenderingContext2D, gameState: GameState, gameProps: GameProps) {
-  const { gridSize, squares, } = gameState;
+export function fillBoxes(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { squares, } = state;
+  const { gridSize } = meta;
   const boxSize = (SCREEN_SIZE - 40) / gridSize;
   const boxInnerMargin = 10;
   for (let i = 0; i < gridSize; i++) {
     for (let j = 0; j < gridSize; j++) {
       const curSquare = squares[i][j];
       if (curSquare !== null) {
-        context.fillStyle = PLAYER_COLORS[gameProps.playerStrings.indexOf(curSquare)];
+        context.fillStyle = PLAYER_COLORS[meta.playerStrings.indexOf(curSquare)];
         context.fillRect(
           20 + j * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
           20 + i * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
@@ -36,17 +37,15 @@ export function fillBoxes(context: CanvasRenderingContext2D, gameState: GameStat
     }
   }
 }
-
-
-export function drawLines(context: CanvasRenderingContext2D, gameState: GameState, gameProps: GameProps) {
-
-  const { gridSize, hlines, vlines, } = gameState;
+export function drawLines(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { hlines, vlines, } = state;
+  const { gridSize } = meta;
   const boxSize = (SCREEN_SIZE - 40) / gridSize;
   context.lineWidth = LINE_THICKNESS;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
       const curSquare = hlines[i][j];
-      const color = curSquare ? PLAYER_COLORS[gameProps.playerStrings.indexOf(curSquare)] : LIGHT_GRAY;
+      const color = curSquare ? PLAYER_COLORS[meta.playerStrings.indexOf(curSquare)] : LIGHT_GRAY;
       context.strokeStyle = color;
       context.beginPath();
       context.moveTo(20 + j * boxSize, 20 + i * boxSize);
@@ -59,7 +58,7 @@ export function drawLines(context: CanvasRenderingContext2D, gameState: GameStat
     for (let j = 0; j < gridSize + 1; j++) {
       if (i < gridSize) {
         const curSquare = vlines[i][j];
-        const color = curSquare ? PLAYER_COLORS[gameProps.playerStrings.indexOf(curSquare)] : LIGHT_GRAY;
+        const color = curSquare ? PLAYER_COLORS[meta.playerStrings.indexOf(curSquare)] : LIGHT_GRAY;
         context.strokeStyle = color;
         context.beginPath();
         context.moveTo(20 + j * boxSize, 20 + i * boxSize);
@@ -80,11 +79,11 @@ export function drawLines(context: CanvasRenderingContext2D, gameState: GameStat
   }
 }
 
-export function displayScores(context: CanvasRenderingContext2D, gameState: GameState, gameProps: GameProps) {
-  const { squares } = gameState;
-  console.log({squares})
-  const youScore = squares.flat().filter((s) => s === gameProps.myPlayerId).length;
-  const opponentScore = squares.flat().filter((s) => s !== gameProps.myPlayerId && s !== null).length;
+export function displayScores(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { squares } = state;
+  const { myPlayerId } = meta;
+  const youScore = squares.flat().filter((s) => s === myPlayerId).length;
+  const opponentScore = squares.flat().filter((s) => s !== myPlayerId && s !== null).length;
 
   context.font = "bold 24px sans-serif";
   context.fillStyle = BLACK;
@@ -103,7 +102,7 @@ export function displayScores(context: CanvasRenderingContext2D, gameState: Game
     SCREEN_SIZE + SCORE_AREA_HEIGHT / 2 - 10
   );
 
-  const opponentString = gameProps.playerStrings.includes('computer') ? "Computer" : "Opponent";
+  const opponentString = meta.playerStrings.includes('computer') ? "Computer" : "Opponent";
   context.fillText(
     `${opponentString}: ${opponentScore}`,
     20,
@@ -111,13 +110,13 @@ export function displayScores(context: CanvasRenderingContext2D, gameState: Game
   );
 }
 
-export default function drawBoard(canvas: HTMLCanvasElement, gameState: GameState, gameProps: GameProps) {
+export default function drawBoard(canvas: HTMLCanvasElement, clientGame: ClientGameV2) {
   const context = canvas.getContext("2d");
   if (!context) throw "No context what?";
 
   context.fillStyle = WHITE;
   context.fillRect(0, 0, WINDOW_SIZE, WINDOW_SIZE);
-  fillBoxes(context, gameState, gameProps);
-  drawLines(context, gameState, gameProps);
-  displayScores(context, gameState, gameProps);
+  fillBoxes(context, clientGame);
+  drawLines(context, clientGame);
+  displayScores(context, clientGame);
 }

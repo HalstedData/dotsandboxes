@@ -5,53 +5,32 @@ export type UserInfo = UserAuth & {
   score: number;
 };
 
-export type GameOnResponse = {
-  gameId: string;
-  yourPlayerId: string;
-  gridSize: number;
-  playerStrings: string[];
-};
+export type GameOnResponse = Pick<GameV2Meta, 'gameId' | 'gridSize' | 'playerStrings'>;
 
 export type GameRequestResponse = GameOnResponse | 'waiting';
 
 export type ClientToServerEvents = {
   "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
-  "send-move": (move: Line, gameId: string) => void;
+  "send-line": (line: Line, gameId: string) => void;
 }
 export type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
-  "receive-move": (move: Line, gameId: string) => void;
+  "receive-line": (line: Line, gameId: string) => void;
   "user-info": (userInfo: UserInfo) => void;
 }
 
-
 // GAME RELATED
-
 type LineArray = (string | null)[][];
-
 export type Line = ['h' | 'v', number, number];
-
-export type GameState = {
-  gridSize: number;
-  hlines: LineArray;
-  vlines: LineArray;
-  squares: LineArray;
-  currentPlayer: string;
-  isGameOver: boolean;
-}
-
-
-
-
-
-
 
 // v2
 
+export type Move = [playerString: string, ...line: Line];
 export type GameV2Meta = {
   gameId: string;
   gridSize: number;
   playerStrings: string[];
+  moveOrder: Move[];
 };
 
 export type GameStateV2 = {
@@ -60,12 +39,17 @@ export type GameStateV2 = {
   squares: LineArray;
   currentPlayer: string;
   isGameOver: boolean;
-}
+};
 
 
 export type GameV2<CustomInfo = {}> = {
-  info: GameV2Meta & CustomInfo;
-  state: GameState;
-}
+  meta: GameV2Meta & CustomInfo;
+  state: GameStateV2;
+};
 
-export type ClientGameV2 = GameV2<{ myPlayerId: string }>;
+export type ClientSpecificMetaData = {
+  myPlayerId: string;
+  width: number;
+  opponent: string;
+};
+export type ClientGameV2 = GameV2<ClientSpecificMetaData>;

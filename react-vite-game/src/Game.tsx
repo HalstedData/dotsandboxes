@@ -1,50 +1,68 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, } from 'react';
 import { useRef, useState } from 'react'
 import drawBoard from './draw-board';
-import { makeMove, makeMoveFromXY, } from '../../commonts/make-move';
+import { applyLine, getLineFromXY, } from '../../commonts/make-move';
 import getComputerMove from './get-computer-move';
 import useGameStatus from './use-game-status';
 import { GameInProgress, GameSocket } from './App';
-import { GameState, Line } from '../../commonts/types';
+import { ClientGameV2, Line, UserInfo } from '../../commonts/types';
 
-export type GameProps = GameInProgress & {
+export type GameProps = {
   onReset: () => void;
   onGoHome: () => void;
   socket: GameSocket;
+  gameInProgress: GameInProgress;
+  userInfo: UserInfo;
 }
 
 const SCREEN_SIZE = 600;
 const SCORE_AREA_HEIGHT = 100;
 const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
-function Game(gameProps: GameProps) {
-  const { gridSize, playerStrings, onReset, onGoHome, myPlayerId, socket, gameId } = gameProps;
-  console.log({ gameProps })
+function Game(props: GameProps) {
+  const { gameInProgress, socket, onReset, onGoHome } = props;
+  const { gridSize, playerStrings, gameId, opponent } = gameInProgress;
+  const userInfoLS = localStorage.getItem("dotsandboxesuserinfo"); // dots and boxes user auth
+  const { userID } = userInfoLS ? JSON.parse(userInfoLS) : {} as UserInfo;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [gameState, setGameState] = useState<GameState>({
-    gridSize,
-    hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
-    vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
-    squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-    currentPlayer: playerStrings[0],
-    isGameOver: false,
+  const [width, setWidth] = useState(600);
+  const [clientGame, setClientGame] = useState<ClientGameV2>({
+    meta: {
+      myPlayerId: userID,
+      gridSize,
+      playerStrings,
+      gameId,
+      width,
+      moveOrder: [],
+      opponent,
+    },
+    state: {
+      hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
+      vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
+      squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
+      currentPlayer: playerStrings[0],
+      isGameOver: false,
+    },
   });
-  const myMove = gameState.currentPlayer === myPlayerId;
+
+  const { meta, state } = clientGame;
+  const isMoveMove = state.currentPlayer === meta.myPlayerId;
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
-    drawBoard(canvasEl, gameState, gameProps);
-  }, [canvasRef, gameState]);
+    drawBoard(canvasEl, clientGame);
+  }, [canvasRef, clientGame]);
 
-  const updateGameState = (gameStateUpdates: Partial<GameState>) => {
-    if (!Object.values(gameStateUpdates).length) return;
-    console.log('updaitng game state', gameStateUpdates)
-    setGameState(currentGameState => ({
-      ...currentGameState,
-      ...gameStateUpdates
-    }));
-  }
+  // const updateGameState = (gameStateUpdates: Partial<GameState>) => {
+  //   if (!Object.values(gameStateUpdates).length) return;
+  //   console.log('updaitng game state', gameStateUpdates)
+  //   setClientGame(currentClientGame => ({
+  //     meta: {
+  //       ...current
+  //     }
+  //   }));
+  // }
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -55,53 +73,61 @@ function Game(gameProps: GameProps) {
     // Set the canvas display size
     canvasEl.style.width = `${WINDOW_SIZE - SCORE_AREA_HEIGHT}px`;
     canvasEl.style.height = `${WINDOW_SIZE}px`;
-    drawBoard(canvasEl, gameState, gameProps);
+    drawBoard(canvasEl, clientGame);
   }, [canvasRef]);
 
-  const gameStatus = useGameStatus(gameState, gameProps);
+  const gameStatus = useGameStatus(clientGame);
 
   function handleCanvasClick(event: { clientX: number; clientY: number; }) {
     const canvasEl = canvasRef.current;
-    if (!canvasEl || !myMove) return;
+    if (!canvasEl || !isMoveMove) return;
     const rect = canvasEl.getBoundingClientRect();
     const x = event.clientX - rect.left;
     const y = event.clientY - rect.top;
-    const { gameStateUpdates, move } = makeMoveFromXY(x, y, gameState, gameProps.playerStrings);
-    updateGameState(gameStateUpdates);
-    gameId && socket.emit('send-move', move as Line, gameId);
+    const line = getLineFromXY(x, y, clientGame);
+    if (!line) return;
+    const nextClientGame = applyLine(line, clientGame);
+    setClientGame(nextClientGame);
+    console.log(`sending line for gameID ${gameId}`);
+    gameId && socket.emit('send-line', line, gameId);
   };
 
-  const receiveMoveHandler = useCallback((move: Line, gameId: string) => {
-    console.log('receiv', gameId, gameProps.gameId)
-    if (gameId !== gameProps.gameId) {
+  const receiveLineHandler = useCallback((line: Line, gameId: string) => {
+    // console.log('receiv', gameId, meta.gameId)
+    if (gameId !== meta.gameId) {
       return;
     }
-    console.log('receiving move cur player', gameState.currentPlayer);
-    const { gameStateUpdates } = makeMove(move, gameState, gameProps.playerStrings);
-    console.log('received move', move, gameStateUpdates);
-    updateGameState(gameStateUpdates);
-  }, [gameState]);
+    console.log('receiving move cur player', clientGame.state.currentPlayer);
+    setClientGame(
+      applyLine(line, clientGame)
+    );
+  }, [clientGame]);
 
   useEffect(() => {
     async function makeComputerMove() {
       console.log('ITS A COMPUTER MOVE')
-      const chosenMove = await getComputerMove(gameState);
+      const chosenMove = await getComputerMove({
+        ...state,
+        gridSize: meta.gridSize
+      });
       await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 2000));
-      receiveMoveHandler(chosenMove, gameProps.gameId);
+      receiveLineHandler(chosenMove, meta.gameId);
     }
 
-    if (!gameState.isGameOver && gameState.currentPlayer === 'computer') {
+    console.log('computer????', state);
+
+    if (!state.isGameOver && state.currentPlayer === 'computer') {
       // its time for a computer move!
       makeComputerMove();
     };
 
-  }, [gameState]);
+  }, [clientGame]);
 
   useEffect(() => {
     console.log('added receive move handler');
-    socket.on('receive-move', receiveMoveHandler);
-    return () => { socket.off('receive-move', receiveMoveHandler); }
-  }, [receiveMoveHandler]);
+    socket.on('receive-line', receiveLineHandler);
+    return () => { socket.off('receive-line', receiveLineHandler); }
+  }, [receiveLineHandler]);
 
   return (
     <div id="game-section">
@@ -110,7 +136,7 @@ function Game(gameProps: GameProps) {
         id="game-canvas"
         ref={canvasRef}
         onClick={handleCanvasClick}
-        style={{ cursor: myMove ? "pointer" : "default" }} />
+        style={{ cursor: isMoveMove ? "pointer" : "default" }} />
       <div className="button-container">
         <button id="reset-game" onClick={() => onReset()}>Reset Game</button>
         <button id="go-home" onClick={() => onGoHome()}>Go Home</button>

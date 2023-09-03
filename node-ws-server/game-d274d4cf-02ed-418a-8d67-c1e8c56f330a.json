@@ -1,0 +1,81 @@
+{
+  "meta": {
+    "gameId": "d274d4cf-02ed-418a-8d67-c1e8c56f330a",
+    "gridSize": 3,
+    "playerStrings": [
+      "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+      "93d56728-4d9d-4ef1-acd7-bf91458aa7d5"
+    ],
+    "moveOrder": [
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "v",
+        0,
+        0
+      ]
+    ]
+  },
+  "state": {
+    "hlines": [
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ]
+    ],
+    "vlines": [
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ]
+    ],
+    "squares": [
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ],
+      [
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+        "edb2c20a-2fc8-4a08-be18-7ff08ec1141a"
+      ]
+    ],
+    "currentPlayer": "edb2c20a-2fc8-4a08-be18-7ff08ec1141a",
+    "isGameOver": true
+  }
+}

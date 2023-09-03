@@ -1,64 +1,69 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket, io } from "socket.io-client";
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameV2, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
+import useGameStatus from './use-game-status';
+import useAppStore from './store';
 // import { GameOnResponse } from '@backend/types';
 
 type Opponent = 'computer' | 'human';
-export type GameInProgress = Omit<GameOnResponse, 'yourPlayerId'> & {
+
+export type GameInProgress = GameOnResponse & {
+  opponent: Opponent;
   myPlayerId: string;
 }
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 
-const socket: GameSocket = io(
-  window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
-  { transports: ['websocket'], autoConnect: false }
-);
-
 function App() {
-  const [gameKey, setGameKey] = useState(0);
-  const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
-  const [socketStatus, setSocketStatus] = useState('');
-  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
+  console.log('appppp');
+  const appStore = useAppStore();
+  const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo } = appStore;
+  // const [socket, setSocket] = useState<GameSocket>(
+  //   io(
+  //     window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
+  //     { transports: ['websocket'], autoConnect: false }
+  //   )
+  // );
+  // const [gameKey, setGameKey] = useState(0);
+  // const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
+  // const [socketStatus, setSocketStatus] = useState('');
+  // const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
 
-  const handleGameOnResponse = ({
+  const handleGameOnResponse = useCallback(({
     gameId,
-    yourPlayerId,
     gridSize,
     playerStrings
   }: Exclude<GameRequestResponse, string>) => {
-    console.log({
-
-      gameId,
-      yourPlayerId,
-      gridSize,
-      playerStrings
-    }, 'handling')
-    setGameInProgress({
+    // if (!userInfo) {
+    //   debugger;
+    //   return console.error('no userinfo');
+    // }
+    newGame({
       gameId,
       gridSize,
       playerStrings,
-      myPlayerId: yourPlayerId,
+      opponent: 'human',
+      myPlayerId: 'hahaha'
     });
     setSocketStatus('');
-    setGameKey(gameKey => gameKey + 1);
-  }
+  }, [userInfo])
 
   const startGameHandler = () => {
-    setGameKey(gameKey => gameKey + 1);
+    if (!userInfo) return;
     const {
       gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value),
     } = gameInProgress || {};
     const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent;
     if (opponent === 'computer') {
-      setGameInProgress({
+      newGame({
         gameId: '343',
-        myPlayerId: 'you',
         gridSize,
-        playerStrings: ['you', 'computer']
+        playerStrings: ['you', 'computer'],
+        opponent,
+        myPlayerId: 'you'
       });
     } else {
       socket.emit('game-request', gridSize, response => {
@@ -73,13 +78,15 @@ function App() {
   };
 
   function connectSocket() {
-    const userInfo = localStorage.getItem("dabui"); // dots and boxes user auth
+    console.log('connectSocket')
+    const userInfo = localStorage.getItem("dotsandboxesuserinfo"); // dots and boxes user auth
     if (userInfo) {
       const parsed = JSON.parse(userInfo) as UserInfo;
       const userAuth: UserAuth = {
         userID: parsed.userID,
         authToken: parsed.authToken
       };
+      console.log('sending userAuth', userAuth)
       socket.auth = userAuth;
     }
     socket.connect();
@@ -95,6 +102,7 @@ function App() {
       setUserInfo(userInfo);
       localStorage.setItem("dotsandboxesuserinfo", JSON.stringify(userInfo));
     });
+    socket.on('connect', () => console.log('CONNECTION'))
     connectSocket();
   }, []);
 
@@ -123,14 +131,14 @@ function App() {
         socketStatus && <h3>{socketStatus}...</h3>
       }
       {
-        gameInProgress &&
+        gameInProgress && userInfo &&
         (
           <Game
             socket={socket}
             key={gameKey}
             onReset={startGameHandler}
-            onGoHome={() => setGameInProgress(null)}
-            {...gameInProgress} />
+            onGoHome={() => newGame(null)}
+            gameInProgress={gameInProgress} userInfo={userInfo} />
         )}
 
     </>
