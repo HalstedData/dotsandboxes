@@ -10,7 +10,7 @@ export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | n
   console.log(`validating ${JSON.stringify(userAuth)}`);
   let foundUser: string | undefined;
   try {
-    foundUser = fs.readFileSync(`./json/users/${userAuth.userID}.json`, 'utf8');
+    foundUser = fs.readFileSync(`./json/users/user-${userAuth.userID}.json`, 'utf8');
   } catch (e) {
     console.error('user not found');
     return null;
@@ -34,7 +34,7 @@ export async function createNewUser(): Promise<UserInfo> {
     authToken: uuid.v4(),
     score: 100,
   };
-  fs.writeFileSync(`./json/users/${userInfo.userID}.json`, JSON.stringify(userInfo, null, 2), 'utf8');
+  fs.writeFileSync(`./json/users/user-${userInfo.userID}.json`, JSON.stringify(userInfo, null, 2), 'utf8');
   return userInfo;
 }
 

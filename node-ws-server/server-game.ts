@@ -34,7 +34,7 @@ export function handleGameOver(gameId: string) {
   const game = gamesInProgress[gameId];
   const { gridSize, playerStrings } = game.meta;
   console.log('GAME OVER');
-  fs.writeFileSync(`./game-${gameId}.json`, JSON.stringify(game, null, 2));
+  fs.writeFileSync(`./json/games/game-${gameId}.json`, JSON.stringify(game, null, 2));
 
   const startNewGameWithSameSettings = (gameId: string) => {
     if (!game) {
