@@ -1,39 +1,13 @@
-import fs from 'fs';
-import { Server, Socket } from 'socket.io';
-import { v4 as uuidv4, validate } from 'uuid';
+import { Server } from 'socket.io';
 import { applyLine } from '../commonts/make-move';
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameV2, Line, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
-import { createNewUser, validateUserAuth } from './users';
+import { ClientToServerEvents, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
+import { createNewUser, emitToUsers, userIDsToSockets, validateUserAuth } from './users';
+import { gamesInProgress, handleGameOver, newGame } from './server-game';
 
 
 const waitingRooms: Map<number, string[]> = new Map();
 
-const gamesInProgress: Record<GameV2["meta"]["gameId"], GameV2> = {};
-type NewGameParams = Pick<GameV2["meta"], 'gridSize' | 'playerStrings'>;
-
-const newGame = (params: NewGameParams) => {
-  const { gridSize, playerStrings } = params;
-  const id = uuidv4();
-  const gameV2: GameV2 = {
-    meta: {
-      gameId: id,
-      gridSize,
-      playerStrings,
-      moveOrder: [],
-    },
-    state: {
-      hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
-      vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
-      squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-      currentPlayer: playerStrings[0],
-      isGameOver: false,
-    }
-  };
-  gamesInProgress[id] = gameV2;
-  return id;
-};
-
-const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo>({
+export const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo>({
   cors: {
     origin: "http://localhost:5173",
     methods: ["GET", "POST"]
@@ -55,10 +29,6 @@ io.use(async (socket, next) => {
 
 
 
-const userIDsToSockets: Record<string, Socket["id"][]> = {};
-
-
-
 io.on('connection', socket => {
   console.log('new connection', socket.data);
   const emitUserInfo = () => {
@@ -77,9 +47,11 @@ io.on('connection', socket => {
     const waiting = (waitingRooms.get(gridSize) || [])
       .filter(userWaiting => userWaiting !== userID);
     const playerToMatch = waiting.shift();
+    console.log({ playerToMatch })
     const matchingSocketIds = playerToMatch ? userIDsToSockets[playerToMatch] : [];
     const matchingSockets = matchingSocketIds
-      .map(socketId => io.sockets.sockets.get(socketId));
+      .map(socketId => io.sockets.sockets.get(socketId))
+      .filter(Boolean);
 
     if (!playerToMatch || !matchingSockets.length) {
       waitingRooms.set(gridSize, [...waiting, userID]);
@@ -120,35 +92,13 @@ io.on('connection', socket => {
       return console.error("Invalid gameId.  Game not found.");
     }
     const nextGame = applyLine(move, gameInProgress);
-    const { gridSize, playerStrings } = gameInProgress.meta;
+    gamesInProgress[gameId] = nextGame;
 
-    if (nextGame.state.isGameOver) {
-      console.log('GAME OVER');
-      fs.writeFileSync(`./game-${gameId}.json`, JSON.stringify(nextGame, null, 2));
+    const { playerStrings } = nextGame.meta;
+    const { isGameOver } = nextGame.state;
 
-      const startNewGameWithSameSettings = () => {
-        delete gamesInProgress[gameId];
-        const newGameId = newGame({
-          gridSize,
-          playerStrings,
-        });
-        const matchingSockets = playerStrings
-          .map(playerUserID =>
-            userIDsToSockets[playerUserID].map(socketId => io.sockets.sockets.get(socketId)))
-          .flat();
-
-        matchingSockets.forEach(playerSocket =>
-          playerSocket?.emit('game-on', {
-            gameId: newGameId,
-            gridSize,
-            playerStrings,
-          }));
-
-      };
-
-      setTimeout(startNewGameWithSameSettings, 4000);
-
-
+    if (isGameOver) {
+      handleGameOver(gameId);
     }
 
     // validate this is their turn
@@ -164,13 +114,11 @@ io.on('connection', socket => {
     // if the move is already taken
 
     // if it is valid then send it to all the other players in the room
-    const matchingSockets = playerStrings
-      .filter(playerUserId => playerUserId !== userID)
-      .map(playerUserID =>
-        userIDsToSockets[playerUserID].map(socketId => io.sockets.sockets.get(socketId)))
-      .flat();
-    matchingSockets.forEach(playerSocket => playerSocket?.emit('receive-line', move, gameId));
 
+    emitToUsers(
+      playerStrings.filter(playerUserId => playerUserId !== userID),
+      'receive-line', move, gameId
+    );
   });
 });
 

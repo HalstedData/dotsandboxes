@@ -1,9 +1,8 @@
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket, io } from "socket.io-client";
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, GameV2, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
-import useGameStatus from './use-game-status';
+import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';
 // import { GameOnResponse } from '@backend/types';
 
@@ -37,10 +36,6 @@ function App() {
     gridSize,
     playerStrings
   }: Exclude<GameRequestResponse, string>) => {
-    // if (!userInfo) {
-    //   debugger;
-    //   return console.error('no userinfo');
-    // }
     newGame({
       gameId,
       gridSize,

@@ -1,6 +1,10 @@
 import fs from 'fs';
-import { UserAuth, UserInfo } from "../commonts/types";
+import { ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
 import * as uuid from 'uuid';
+import { Socket } from 'socket.io';
+import { io } from '.';
+
+export const userIDsToSockets: Record<string, Socket["id"][]> = {};
 
 export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | null> {
   console.log(`validating ${JSON.stringify(userAuth)}`);
@@ -26,10 +30,36 @@ export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | n
 
 export async function createNewUser(): Promise<UserInfo> {
   const userInfo: UserInfo = {
-   userID: uuid.v4(),
-   authToken: uuid.v4(),
-   score: 100,
+    userID: uuid.v4(),
+    authToken: uuid.v4(),
+    score: 100,
   };
   fs.writeFileSync(`./json/users/${userInfo.userID}.json`, JSON.stringify(userInfo, null, 2), 'utf8');
   return userInfo;
+}
+
+export function emitToUsers<Event extends keyof ServerToClientEvents>(
+  userIDs: string[],
+  event: Event,
+  ...args: Parameters<ServerToClientEvents[Event]>
+) {
+
+  const matchingSockets = userIDs
+    .map(playerUserID => {
+      const playerSocketIDs = userIDsToSockets[playerUserID];
+      return {
+        playerUserID,
+        playerSocketIDs,
+        playerSockets: playerSocketIDs
+          .map(socketId => io.sockets.sockets.get(socketId))
+          .filter(Boolean)
+      }
+    });
+  matchingSockets.forEach(({ playerUserID, playerSocketIDs, playerSockets }) => {
+    if (!playerSocketIDs.length || !playerSockets.length) {
+      return console.log(`no sockets found for playerUserID: ${playerUserID}`);
+    };
+    playerSockets.forEach(playerSocket => playerSocket?.emit(event, ...args));
+  });
+
 }
