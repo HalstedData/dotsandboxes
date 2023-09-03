@@ -1,11 +1,9 @@
 import { useCallback, useEffect } from 'react'
 import './App.css'
 import Game from './Game';
-import { Socket, io } from "socket.io-client";
+import { Socket } from "socket.io-client";
 import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';
-// import { GameOnResponse } from '@backend/types';
-
 type Opponent = 'computer' | 'human';
 
 export type GameInProgress = GameOnResponse & {
@@ -19,18 +17,6 @@ function App() {
   console.log('appppp');
   const appStore = useAppStore();
   const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo } = appStore;
-  // const [socket, setSocket] = useState<GameSocket>(
-  //   io(
-  //     window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
-  //     { transports: ['websocket'], autoConnect: false }
-  //   )
-  // );
-  // const [gameKey, setGameKey] = useState(0);
-  // const [gameInProgress, setGameInProgress] = useState<GameInProgress | null>(null);
-  // const [socketStatus, setSocketStatus] = useState('');
-  // const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
-
-
   const handleGameOnResponse = useCallback(({
     gameId,
     gridSize,
@@ -56,7 +42,7 @@ function App() {
       newGame({
         gameId: '343',
         gridSize,
-        playerStrings: ['you', 'computer'],
+        playerStrings: [userInfo.userID, 'computer'],
         opponent,
         myPlayerId: 'you'
       });
@@ -134,9 +120,21 @@ function App() {
             onReset={startGameHandler}
             onGoHome={() => newGame(null)}
             gameInProgress={gameInProgress} userInfo={userInfo} />
-        )}
+        )
+      }
+      {userInfo && <UserInfoPanel {...userInfo} />}
 
     </>
+  )
+}
+
+function UserInfoPanel(props: UserInfo) {
+  return (
+    <div>
+      <pre>
+        {JSON.stringify(props, null, 2)}
+      </pre>
+    </div>
   )
 }
 

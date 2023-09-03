@@ -20,15 +20,12 @@ const SCORE_AREA_HEIGHT = 100;
 const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
 function Game(props: GameProps) {
-  const { gameInProgress, socket, onReset, onGoHome } = props;
+  const { gameInProgress, socket, onReset, onGoHome, userInfo } = props;
   const { gridSize, playerStrings, gameId, opponent } = gameInProgress;
-  const userInfoLS = localStorage.getItem("dotsandboxesuserinfo"); // dots and boxes user auth
-  const { userID } = userInfoLS ? JSON.parse(userInfoLS) : {} as UserInfo;
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [width, setWidth] = useState(600);
   const [clientGame, setClientGame] = useState<ClientGameV2>({
     meta: {
-      myPlayerId: userID,
       gridSize,
       playerStrings,
       gameId,
@@ -46,7 +43,7 @@ function Game(props: GameProps) {
   });
 
   const { meta, state } = clientGame;
-  const isMoveMove = state.currentPlayer === meta.myPlayerId;
+  const isMoveMove = state.currentPlayer === userInfo.userID;
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -76,7 +73,7 @@ function Game(props: GameProps) {
     drawBoard(canvasEl, clientGame);
   }, [canvasRef]);
 
-  const gameStatus = useGameStatus(clientGame);
+  const gameStatus = useGameStatus(clientGame, userInfo);
 
   function handleCanvasClick(event: { clientX: number; clientY: number; }) {
     const canvasEl = canvasRef.current;

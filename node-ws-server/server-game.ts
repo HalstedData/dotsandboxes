@@ -1,7 +1,7 @@
 import fs from 'fs';
 import { GameV2 } from "../commonts/types";
 import { v4 as uuidv4 } from 'uuid';
-import { emitToUsers, userIDsToSockets } from './users';
+import { emitToUsers, getUserByID, updateUserScore, userIDsToSockets } from './users';
 import { io } from '.';
 
 type NewGameParams = Pick<GameV2["meta"], 'gridSize' | 'playerStrings'>;
@@ -32,9 +32,43 @@ export function newGame(params: NewGameParams) {
 
 export function handleGameOver(gameId: string) {
   const game = gamesInProgress[gameId];
-  const { gridSize, playerStrings } = game.meta;
-  console.log('GAME OVER');
-  fs.writeFileSync(`./json/games/game-${gameId}.json`, JSON.stringify(game, null, 2));
+  const { gridSize, playerStrings, winnerUserID } = game.meta;
+  const { isGameOver, squares } = game.state;
+  if (!isGameOver || !winnerUserID) {
+    return console.error('handling game over but !isGameOver || !winnerUserID')
+  }
+  fs.writeFileSync(`./json/games/game-${gameId}.json`, JSON.stringify(game.meta, null, 2));
+
+  const updateUserScores = async () => {
+    const allUserInfos = (await Promise.all(
+      playerStrings.map(async userID => ({
+        userID,
+        userInfo: await getUserByID(userID),
+        squarePerc: squares.flat().filter(square => square === userID).length / squares.flat().length
+      }))
+    ));
+
+    for (let { userInfo, userID, squarePerc } of allUserInfos) {
+      if (!userInfo) {
+        console.error(`when updating scores ... could not get userInfo for userID ${userID}`);
+        continue;
+      }
+      const myScore = userInfo.score;
+      const otherUsersScores = allUserInfos
+        .filter(({ userID: otherUserID, }) => otherUserID !== userID)
+        .map(({ userInfo: otherUserInfo }) => otherUserInfo?.score)
+        .filter((score): score is number => !!score);
+      const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
+      const isWinner = winnerUserID === userID;
+      const diff = avgScoreOtherUsers - myScore;
+      const changeAffectBySquarePerc = diff * squarePerc;
+      const update = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
+      console.log({ isWinner, myScore, avgScoreOtherUsers, diff, changeAffectBySquarePerc, update, })
+      await updateUserScore(userID, update);
+    }
+  };
+
+  updateUserScores();
 
   const startNewGameWithSameSettings = (gameId: string) => {
     if (!game) {

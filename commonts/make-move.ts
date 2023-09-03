@@ -1,8 +1,8 @@
-import { ClientGameV2, GameStateV2, GameV2, Line } from "./types";
+import { ClientGameV2, GameV2State, GameV2, GameV2Meta, Line } from "./types";
 
 const SCREEN_SIZE = 600;
 
-function checkSquareCompletionH(i: number, j: number, { state, meta }: GameV2): Partial<GameStateV2> | undefined {
+function checkSquareCompletionH(i: number, j: number, { state, meta }: GameV2): Partial<GameV2State> | undefined {
   const { hlines, vlines, squares, currentPlayer } = state;
   const { gridSize } = meta;
   let squareCompleted = false;
@@ -29,7 +29,7 @@ function checkSquareCompletionH(i: number, j: number, { state, meta }: GameV2): 
   } : undefined;
 }
 
-function checkSquareCompletionV(i: number, j: number, { state, meta }: GameV2): Partial<GameStateV2> | undefined {
+function checkSquareCompletionV(i: number, j: number, { state, meta }: GameV2): Partial<GameV2State> | undefined {
   const { hlines, vlines, squares, currentPlayer } = state;
   const { gridSize } = meta;
   let squareCompleted = false;
@@ -56,7 +56,7 @@ function checkSquareCompletionV(i: number, j: number, { state, meta }: GameV2): 
   } : undefined;
 }
 
-export function updateSquares(line: Line, game: GameV2): Partial<GameStateV2> | undefined {
+export function updateSquares(line: Line, game: GameV2): Partial<GameV2State> | undefined {
   const [lineType, lineI, lineJ] = line;
   if (lineType === "h") {
     return checkSquareCompletionH(lineI, lineJ, game);
@@ -69,7 +69,15 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
   const { state, meta } = game;
   const { hlines, vlines, currentPlayer } = state;
   const { playerStrings, gridSize } = meta;
-  const gameStateUpdates: Partial<GameStateV2> = {};
+
+  const gameStateUpdates: Partial<GameV2State> = {};
+  const gameMetaUpdates: Partial<GameV2Meta> = {
+    moveOrder: [
+      ...meta.moveOrder,
+      [state.currentPlayer, ...line]
+    ]
+  };
+
   const [minType, lineI, lineJ] = line;
   const curPlayerIndex = playerStrings.indexOf(currentPlayer);
   if (minType === "h") {
@@ -81,36 +89,44 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
     gameStateUpdates.vlines = vlines;
     Object.assign(gameStateUpdates, updateSquares(["v", lineI, lineJ], game));
   }
-  // console.log('cur', currentPlayer, 'next', playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1], 'squareCompleted', squareCompleted);
 
-  const stateUpdates = {
-    ...gameStateUpdates,
-    ...gameStateUpdates.squares ? {
-      isGameOver: (() => {
-        for (let i = 0; i < gridSize; i++) {
-          for (let j = 0; j < gridSize; j++) {
-            if ((gameStateUpdates.squares)[i][j] === null) {
-              return false;
-            }
+  if (gameStateUpdates.squares) {
+    const squareCounts: Record<string, number> = {};
+    const isGameOver = (() => {
+      for (let i = 0; i < gridSize; i++) {
+        for (let j = 0; j < gridSize; j++) {
+          const squareValue = (gameStateUpdates.squares)[i][j];
+          if (squareValue === null) {
+            return false;
           }
+          squareCounts[squareValue] = (squareCounts[squareValue] || 0) + 1;
         }
-        return true;
-      })(),
-    } : {
-      currentPlayer: playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1],
+      }
+      return true;
+    })();
+    if (isGameOver) {
+      console.log('isGaveOver detected winnerUserID', currentPlayer);
+      gameStateUpdates.isGameOver = true;
+      gameMetaUpdates.winnerUserID = Object.entries(squareCounts)
+        .map(([userID, squareCount]) => ({
+          userID,
+          squareCount
+        }))
+        .sort((a, b) => b.squareCount - a.squareCount)
+        .shift()?.userID;
     }
-  };
+  } else {
+    gameStateUpdates.currentPlayer = playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1];
+  }
+
   return {
     meta: {
       ...meta,
-      moveOrder: [
-        ...meta.moveOrder,
-        [state.currentPlayer, ...line]
-      ]
+      ...gameMetaUpdates,
     },
     state: {
       ...state,
-      ...stateUpdates,
+      ...gameStateUpdates,
     }
   } as T;
 }

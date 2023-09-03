@@ -1,17 +1,18 @@
 import { useMemo } from "react";
-import { ClientGameV2 } from "../../commonts/types";
+import { ClientGameV2, UserInfo } from "../../commonts/types";
 
-export default function useGameStatus({ meta, state }: ClientGameV2) {
-  const { opponent, myPlayerId } = meta;
+export default function useGameStatus({ meta, state }: ClientGameV2, userInfo: UserInfo) {
+  const { userID } = userInfo;
+  const { opponent } = meta;
   const { hlines, vlines, isGameOver, squares, currentPlayer } = state;
-  const isMyMove = currentPlayer === myPlayerId;
+  const isMyMove = currentPlayer === userID;
   return useMemo<string>(() => {
     const allLines = [...hlines, ...vlines].flat();
     const noMovesPlayed = !allLines.filter(Boolean).length;
     const opponentString = opponent === "computer" ? "Computer" : "Opponent";
     if (isGameOver) {
-      const youScore = squares.flat().filter((s) => s === myPlayerId).length;
-      const opponentScore = squares.flat().filter((s) => s !== myPlayerId).length;
+      const youScore = squares.flat().filter((s) => s === userID).length;
+      const opponentScore = squares.flat().filter((s) => s !== userID).length;
       if (youScore > opponentScore) {
         return "YOU WON!";
       } else if (youScore < opponentScore) {

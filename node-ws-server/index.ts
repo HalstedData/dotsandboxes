@@ -98,6 +98,7 @@ io.on('connection', socket => {
     const { isGameOver } = nextGame.state;
 
     if (isGameOver) {
+      console.log('GAME OVER');
       handleGameOver(gameId);
     }
 

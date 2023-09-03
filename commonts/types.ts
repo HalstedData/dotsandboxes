@@ -31,9 +31,10 @@ export type GameV2Meta = {
   gridSize: number;
   playerStrings: string[];
   moveOrder: Move[];
+  winnerUserID?: string;
 };
 
-export type GameStateV2 = {
+export type GameV2State = {
   hlines: LineArray;
   vlines: LineArray;
   squares: LineArray;
@@ -44,11 +45,10 @@ export type GameStateV2 = {
 
 export type GameV2<CustomInfo = {}> = {
   meta: GameV2Meta & CustomInfo;
-  state: GameStateV2;
+  state: GameV2State;
 };
 
 export type ClientSpecificMetaData = {
-  myPlayerId: string;
   width: number;
   opponent: string;
 };
