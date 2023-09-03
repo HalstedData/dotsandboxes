@@ -1,5 +1,4 @@
-import { ClientGameV2, GameState } from "../../commonts/types";
-import { GameProps } from "./Game";
+import { ClientGameV2 } from "../../commonts/types";
 
 // CONSTANTS
 const LINE_THICKNESS = 5;

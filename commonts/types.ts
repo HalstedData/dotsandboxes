@@ -17,6 +17,7 @@ export type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
   "receive-line": (line: Line, gameId: string) => void;
   "user-info": (userInfo: UserInfo) => void;
+  "player-disconnected": () => void;
 }
 
 // GAME RELATED
@@ -48,8 +49,10 @@ export type GameV2<CustomInfo = {}> = {
   state: GameV2State;
 };
 
+export type Opponent = 'computer' | 'human';
 export type ClientSpecificMetaData = {
   width: number;
-  opponent: string;
+  opponent: Opponent;
+  myPlayerId: string;
 };
 export type ClientGameV2 = GameV2<ClientSpecificMetaData>;

@@ -2,7 +2,7 @@ import { Server } from 'socket.io';
 import { applyLine } from '../commonts/make-move';
 import { ClientToServerEvents, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
 import { createNewUser, emitToUsers, userIDsToSockets, validateUserAuth } from './users';
-import { gamesInProgress, handleGameOver, newGame } from './server-game';
+import { gamesInProgress, handleGameOver, newGame, playerHasDisconnected } from './server-game';
 
 
 const waitingRooms: Map<number, string[]> = new Map();
@@ -48,7 +48,7 @@ io.on('connection', socket => {
       .filter(userWaiting => userWaiting !== userID);
     const playerToMatch = waiting.shift();
     console.log({ playerToMatch })
-    const matchingSocketIds = playerToMatch ? userIDsToSockets[playerToMatch] : [];
+    const matchingSocketIds = playerToMatch ? userIDsToSockets[playerToMatch] ?? [] : [];
     const matchingSockets = matchingSocketIds
       .map(socketId => io.sockets.sockets.get(socketId))
       .filter(Boolean);
@@ -120,6 +120,16 @@ io.on('connection', socket => {
       playerStrings.filter(playerUserId => playerUserId !== userID),
       'receive-line', move, gameId
     );
+  });
+  socket.on('disconnect', () => {
+    const { userID } = socket.data;
+    playerHasDisconnected(userID);
+    const newUserIDSockets = userIDsToSockets[userID].filter(socketID => socketID !== socket.id);
+    if (!newUserIDSockets.length) {
+      delete userIDsToSockets[userID];
+    } else {
+      userIDsToSockets[userID] = newUserIDSockets;
+    }
   });
 });
 

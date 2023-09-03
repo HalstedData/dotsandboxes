@@ -1,23 +1,20 @@
-import { useCallback, useEffect } from 'react'
+import { useEffect } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket } from "socket.io-client";
-import { ClientToServerEvents, GameOnResponse, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
+import { ClientGameV2, ClientToServerEvents, GameRequestResponse, Opponent, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';
-type Opponent = 'computer' | 'human';
 
-export type GameInProgress = GameOnResponse & {
-  opponent: Opponent;
-  myPlayerId: string;
-}
+export type GameInProgress = Pick<ClientGameV2['meta'], 'gameId' | 'gridSize' | 'playerStrings' | 'opponent'>;
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
-
+let renderCount = 0;
 function App() {
   console.log('appppp');
-  const appStore = useAppStore();
-  const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo } = appStore;
-  const handleGameOnResponse = useCallback(({
+  const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo } = useAppStore();
+  renderCount++;
+  console.log('RENDER', userInfo, gameKey, socketStatus, renderCount);
+  const handleGameOnResponse = ({
     gameId,
     gridSize,
     playerStrings
@@ -27,10 +24,9 @@ function App() {
       gridSize,
       playerStrings,
       opponent: 'human',
-      myPlayerId: 'hahaha'
     });
     setSocketStatus('');
-  }, [userInfo])
+  };
 
   const startGameHandler = () => {
     if (!userInfo) return;
@@ -42,9 +38,8 @@ function App() {
       newGame({
         gameId: '343',
         gridSize,
-        playerStrings: [userInfo.userID, 'computer'],
+        playerStrings: ['you', 'computer'],
         opponent,
-        myPlayerId: 'you'
       });
     } else {
       socket.emit('game-request', gridSize, response => {
@@ -58,7 +53,7 @@ function App() {
     }
   };
 
-  function connectSocket() {
+  const connectSocket = () => {
     console.log('connectSocket')
     const userInfo = localStorage.getItem("dotsandboxesuserinfo"); // dots and boxes user auth
     if (userInfo) {
@@ -71,20 +66,24 @@ function App() {
       socket.auth = userAuth;
     }
     socket.connect();
-  }
+  };
 
   useEffect(() => {
-    socket.on('game-on', response => {
-      console.log('game on', response);
-      handleGameOnResponse(response);
-    });
+    socket.on('game-on', handleGameOnResponse);
     socket.on('user-info', (userInfo) => {
       console.log(`setting user-info`, userInfo);
       setUserInfo(userInfo);
       localStorage.setItem("dotsandboxesuserinfo", JSON.stringify(userInfo));
     });
+    socket.on('player-disconnected', () => {
+      alert('player has disconnected');
+      newGame(null);
+    });
     socket.on('connect', () => console.log('CONNECTION'))
     connectSocket();
+    return () => {
+      socket.removeAllListeners();
+    };
   }, []);
 
   return (

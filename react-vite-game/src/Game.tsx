@@ -6,6 +6,8 @@ import getComputerMove from './get-computer-move';
 import useGameStatus from './use-game-status';
 import { GameInProgress, GameSocket } from './App';
 import { ClientGameV2, Line, UserInfo } from '../../commonts/types';
+import { useWindowSize } from 'react-use'
+import Confetti from 'react-confetti'
 
 export type GameProps = {
   onReset: () => void;
@@ -20,18 +22,20 @@ const SCORE_AREA_HEIGHT = 100;
 const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
 function Game(props: GameProps) {
+  const { width, height } = useWindowSize()
   const { gameInProgress, socket, onReset, onGoHome, userInfo } = props;
   const { gridSize, playerStrings, gameId, opponent } = gameInProgress;
+  // const [showingConfetti, setShowingConfetti] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const [width, setWidth] = useState(600);
   const [clientGame, setClientGame] = useState<ClientGameV2>({
     meta: {
       gridSize,
       playerStrings,
       gameId,
-      width,
+      width: Math.min(600, width),
       moveOrder: [],
       opponent,
+      myPlayerId: opponent === 'computer' ? 'you' : userInfo.userID,
     },
     state: {
       hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
@@ -43,7 +47,8 @@ function Game(props: GameProps) {
   });
 
   const { meta, state } = clientGame;
-  const isMoveMove = state.currentPlayer === userInfo.userID;
+  const showingConfetti = meta.winnerUserID === meta.myPlayerId;
+  const isMoveMove = state.currentPlayer === meta.myPlayerId;
 
   useEffect(() => {
     const canvasEl = canvasRef.current;
@@ -73,7 +78,7 @@ function Game(props: GameProps) {
     drawBoard(canvasEl, clientGame);
   }, [canvasRef]);
 
-  const gameStatus = useGameStatus(clientGame, userInfo);
+  const gameStatus = useGameStatus(clientGame);
 
   function handleCanvasClick(event: { clientX: number; clientY: number; }) {
     const canvasEl = canvasRef.current;
@@ -138,6 +143,15 @@ function Game(props: GameProps) {
         <button id="reset-game" onClick={() => onReset()}>Reset Game</button>
         <button id="go-home" onClick={() => onGoHome()}>Go Home</button>
       </div>
+      {
+        showingConfetti && (
+          <Confetti
+            width={width}
+            height={height}
+            gravity={0.5}
+          />
+        )
+      }
     </div>
   );
 };

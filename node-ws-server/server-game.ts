@@ -87,3 +87,10 @@ export function handleGameOver(gameId: string) {
   };
   setTimeout(() => startNewGameWithSameSettings(gameId), 4000);
 }
+
+export function playerHasDisconnected(userID: string) {
+  const gameInProgress = Object.values(gamesInProgress).find(game => game.meta.playerStrings.includes(userID));
+  if (!gameInProgress) return;
+  emitToUsers(gameInProgress.meta.playerStrings, 'player-disconnected');
+  delete gamesInProgress[gameInProgress.meta.gameId];
+}
