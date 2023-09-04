@@ -43,8 +43,9 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
   context.lineWidth = LINE_THICKNESS;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
+      context.strokeStyle = LIGHT_GRAY;
       const curSquare = hlines[i][j];
-      const color = curSquare ? PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)] : LIGHT_GRAY;
+      const color = curSquare !== null ? PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)] : LIGHT_GRAY;
       context.strokeStyle = color;
       context.beginPath();
       context.moveTo(20 + j * boxSize, 20 + i * boxSize);
@@ -56,9 +57,10 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
 
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize + 1; j++) {
+      context.strokeStyle = LIGHT_GRAY;
       if (i < gridSize) {
         const curSquare = vlines[i][j];
-        const color = curSquare ? PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)] : LIGHT_GRAY;
+        const color = curSquare !== null ? PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)] : LIGHT_GRAY;
         context.strokeStyle = color;
         context.beginPath();
         context.moveTo(20 + j * boxSize, 20 + i * boxSize);
@@ -93,7 +95,8 @@ export function displayScores(context: CanvasRenderingContext2D, { state, meta }
     }), {} as Record<string, number>);
 
   const youScore = scoreByUserID[myPlayerId];
-  const [opponentUserID, opponentScore] = Object.entries(scoreByUserID).find(([compareID, score]) => compareID !== myPlayerId) || [];
+  const [opponentUserID, opponentScore] = Object.entries(scoreByUserID)
+    .find(([compareID]) => compareID !== myPlayerId) || [];
 
   context.font = "bold 24px sans-serif";
   context.fillStyle = BLACK;

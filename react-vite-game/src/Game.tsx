@@ -139,7 +139,7 @@ function Game(props: GameProps) {
         onClick={handleCanvasClick}
         style={{ cursor: isMoveMove ? "pointer" : "default" }} />
       <div className="button-container">
-        <button id="reset-game" onClick={() => onReset()}>Reset Game</button>
+        {/* <button id="reset-game" onClick={() => onReset()}>Reset Game</button> */}
         <button id="go-home" onClick={() => onGoHome()}>Go Home</button>
       </div>
       {
