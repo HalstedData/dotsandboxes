@@ -1,5 +1,5 @@
 import fs from 'fs';
-import { ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
+import { Player, ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
 import * as uuid from 'uuid';
 import { Socket } from 'socket.io';
 import { io } from '.';
@@ -68,6 +68,14 @@ export function emitToUsers<Event extends keyof ServerToClientEvents>(
     };
     playerSockets.forEach(playerSocket => playerSocket?.emit(event, ...args));
   });
+}
+
+export function emitToPlayers<Event extends keyof ServerToClientEvents>(
+  players: Player[],
+  event: Event,
+  ...args: Parameters<ServerToClientEvents[Event]>
+) {
+  return emitToUsers(players.map(player => player.userID), event, ...args);
 }
 
 

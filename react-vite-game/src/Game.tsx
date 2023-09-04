@@ -24,24 +24,23 @@ const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 function Game(props: GameProps) {
   const { width, height } = useWindowSize()
   const { gameInProgress, socket, onReset, onGoHome, userInfo } = props;
-  const { gridSize, playerStrings, gameId, opponent } = gameInProgress;
+  const { gridSize, players, gameId } = gameInProgress;
   // const [showingConfetti, setShowingConfetti] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [clientGame, setClientGame] = useState<ClientGameV2>({
     meta: {
       gridSize,
-      playerStrings,
+      players,
       gameId,
       width: Math.min(600, width),
       moveOrder: [],
-      opponent,
-      myPlayerId: opponent === 'computer' ? 'you' : userInfo.userID,
+      myPlayerId: userInfo.userID,
     },
     state: {
       hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
       vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
       squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-      currentPlayer: playerStrings[0],
+      currentPlayer: players[0].userID,
       isGameOver: false,
     },
   });
@@ -56,27 +55,27 @@ function Game(props: GameProps) {
     drawBoard(canvasEl, clientGame);
   }, [canvasRef, clientGame]);
 
-  // const updateGameState = (gameStateUpdates: Partial<GameState>) => {
-  //   if (!Object.values(gameStateUpdates).length) return;
-  //   console.log('updaitng game state', gameStateUpdates)
-  //   setClientGame(currentClientGame => ({
-  //     meta: {
-  //       ...current
-  //     }
-  //   }));
-  // }
-
-  useEffect(() => {
+  const sizeCanvas = () => {
+    console.log('sizing canvas')
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
-    canvasEl.width = WINDOW_SIZE - SCORE_AREA_HEIGHT;
-    canvasEl.height = WINDOW_SIZE;
+    const canvasWidth = Math.min(600, width);
+    canvasEl.width = canvasWidth;
+    canvasEl.height = canvasWidth + SCORE_AREA_HEIGHT;
 
     // Set the canvas display size
-    canvasEl.style.width = `${WINDOW_SIZE - SCORE_AREA_HEIGHT}px`;
-    canvasEl.style.height = `${WINDOW_SIZE}px`;
-    drawBoard(canvasEl, clientGame);
-  }, [canvasRef]);
+    // canvasEl.style.width = `${canvasWidth}px`;
+    // canvasEl.style.height = `${canvasWidth + SCORE_AREA_HEIGHT}px`;
+    setClientGame({
+      meta: {
+        ...clientGame.meta,
+        width: canvasWidth,
+      },
+      state: clientGame.state
+    });
+  };
+
+  useEffect(sizeCanvas, [width]);
 
   const gameStatus = useGameStatus(clientGame);
 

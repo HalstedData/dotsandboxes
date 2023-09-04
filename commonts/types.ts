@@ -5,7 +5,7 @@ export type UserInfo = UserAuth & {
   score: number;
 };
 
-export type GameOnResponse = Pick<GameV2Meta, 'gameId' | 'gridSize' | 'playerStrings'>;
+export type GameOnResponse = Pick<GameV2Meta, 'gameId' | 'gridSize' | 'players'>;
 
 export type GameRequestResponse = GameOnResponse | 'waiting';
 
@@ -25,12 +25,15 @@ type LineArray = (string | null)[][];
 export type Line = ['h' | 'v', number, number];
 
 // v2
-
-export type Move = [playerString: string, ...line: Line];
+export type Move = [userID: string, ...line: Line];
+export type Player = {
+  userID: string;
+  score: number;
+};
 export type GameV2Meta = {
   gameId: string;
   gridSize: number;
-  playerStrings: string[];
+  players: Player[];
   moveOrder: Move[];
   winnerUserID?: string;
 };
@@ -49,10 +52,12 @@ export type GameV2<CustomInfo = {}> = {
   state: GameV2State;
 };
 
-export type Opponent = 'computer' | 'human';
+export type ServerGameV2 = GameV2<{
+  isComputerGame?: true;
+}>
+
 export type ClientSpecificMetaData = {
   width: number;
-  opponent: Opponent;
   myPlayerId: string;
 };
 export type ClientGameV2 = GameV2<ClientSpecificMetaData>;

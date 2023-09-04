@@ -1,7 +1,7 @@
 import { Server } from 'socket.io';
 import { applyLine } from '../commonts/make-move';
 import { ClientToServerEvents, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
-import { createNewUser, emitToUsers, userIDsToSockets, validateUserAuth } from './users';
+import { createNewUser, emitToUsers, getUserByID, userIDsToSockets, validateUserAuth } from './users';
 import { gamesInProgress, handleGameOver, newGame, playerHasDisconnected } from './server-game';
 
 
@@ -42,7 +42,7 @@ io.on('connection', socket => {
   };
   emitUserInfo();
 
-  socket.on('game-request', (gridSize, cb) => {
+  socket.on('game-request', async (gridSize, cb) => {
     const { userID } = socket.data;
     const waiting = (waitingRooms.get(gridSize) || [])
       .filter(userWaiting => userWaiting !== userID);
@@ -58,10 +58,17 @@ io.on('connection', socket => {
       console.log({ waiting, matchingSocketIds, playerToMatch });
       return cb('waiting');
     }
-    const playerStrings = [playerToMatch, userID];
+    const playersUserIDs = [playerToMatch, userID];
+    const playerUserInfos = (await Promise.all(
+      playersUserIDs.map(async userID => await getUserByID(userID))
+    )).filter((player): player is UserInfo => !!player);
+    const players = playerUserInfos.map(userInfo => ({
+      userID: userInfo.userID,
+      score: userInfo.score,
+    }));
     const newGameId = newGame({
       gridSize,
-      playerStrings,
+      players,
     });
     matchingSockets.forEach(playerSocket => {
       // console.log({ playerSocket });
@@ -69,14 +76,14 @@ io.on('connection', socket => {
         gameId: newGameId,
         // yourPlayerId: playerToMatch,
         gridSize,
-        playerStrings,
+        players,
       }));
     });
     cb({
       gameId: newGameId,
       // yourPlayerId: socket.id,
       gridSize,
-      playerStrings,
+      players,
     });
 
 
@@ -103,7 +110,7 @@ io.on('connection', socket => {
     const nextGame = applyLine(move, gameInProgress);
     gamesInProgress[gameId] = nextGame;
 
-    const { playerStrings } = nextGame.meta;
+    const { players } = nextGame.meta;
     const { isGameOver } = nextGame.state;
 
     if (isGameOver) {
@@ -125,7 +132,9 @@ io.on('connection', socket => {
     // if it is valid then send it to all the other players in the room
 
     emitToUsers(
-      playerStrings.filter(playerUserId => playerUserId !== userID),
+      players
+        .map(player => player.userID)
+        .filter(playerUserId => playerUserId !== userID),
       'receive-line', move, gameId
     );
   });

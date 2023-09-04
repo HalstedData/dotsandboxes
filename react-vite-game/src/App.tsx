@@ -2,10 +2,10 @@ import { useEffect } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket } from "socket.io-client";
-import { ClientGameV2, ClientToServerEvents, GameRequestResponse, Opponent, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
+import { ClientGameV2, ClientToServerEvents, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';
 
-export type GameInProgress = Pick<ClientGameV2['meta'], 'gameId' | 'gridSize' | 'playerStrings' | 'opponent'>;
+export type GameInProgress = Pick<ClientGameV2['meta'], 'gameId' | 'gridSize' | 'players'>;
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 let renderCount = 0;
@@ -17,13 +17,12 @@ function App() {
   const handleGameOnResponse = ({
     gameId,
     gridSize,
-    playerStrings
+    players
   }: Exclude<GameRequestResponse, string>) => {
     newGame({
       gameId,
       gridSize,
-      playerStrings,
-      opponent: 'human',
+      players,
     });
     setSocketStatus('');
   };
@@ -33,24 +32,24 @@ function App() {
     const {
       gridSize = Number((document.getElementById("grid-size") as HTMLSelectElement)?.value),
     } = gameInProgress || {};
-    const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent;
-    if (opponent === 'computer') {
-      newGame({
-        gameId: '343',
-        gridSize,
-        playerStrings: ['you', 'computer'],
-        opponent,
-      });
-    } else {
-      socket.emit('game-request', gridSize, response => {
-        console.log('game request response', response);
-        if (response === 'waiting') {
-          setSocketStatus('waiting');
-        } else {
-          handleGameOnResponse(response);
-        }
-      });
-    }
+    // const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent;
+    // if (opponent === 'computer') {
+    //   newGame({
+    //     gameId: '343',
+    //     gridSize,
+    //     players: [{'you', 'computer'],
+    //     opponent,
+    //   });
+    // } else {
+    socket.emit('game-request', gridSize, response => {
+      console.log('game request response', response);
+      if (response === 'waiting') {
+        setSocketStatus('waiting');
+      } else {
+        handleGameOnResponse(response);
+      }
+    });
+    // }
   };
 
   const connectSocket = () => {
@@ -98,11 +97,11 @@ function App() {
               <option value="4">4x4</option>
               <option value="5">5x5</option>
             </select><br />
-            <label htmlFor="opponent">Opponent:</label>
+            {/* <label htmlFor="opponent">Opponent:</label>
             <select id="opponent">
               <option value="computer">Computer</option>
               <option value="human">Human</option>
-            </select><br />
+            </select><br /> */}
             <button id="start-button" onClick={startGameHandler}>Start Game</button>
           </div>
         )
@@ -127,11 +126,12 @@ function App() {
   )
 }
 
-function UserInfoPanel(props: UserInfo) {
+function UserInfoPanel({ userID, score }: UserInfo) {
   return (
     <div>
       <pre>
-        {JSON.stringify(props, null, 2)}
+        You are: {userID}<br/>
+        Score: {score}
       </pre>
     </div>
   )

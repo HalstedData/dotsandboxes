@@ -1,7 +1,5 @@
 import { ClientGameV2, GameV2State, GameV2, GameV2Meta, Line } from "./types";
 
-const SCREEN_SIZE = 600;
-
 function checkSquareCompletionH(i: number, j: number, { state, meta }: GameV2): Partial<GameV2State> | undefined {
   const { hlines, vlines, squares, currentPlayer } = state;
   const { gridSize } = meta;
@@ -68,7 +66,7 @@ export function updateSquares(line: Line, game: GameV2): Partial<GameV2State> | 
 export function applyLine<T extends GameV2>(line: Line, game: T): T {
   const { state, meta } = game;
   const { hlines, vlines, currentPlayer } = state;
-  const { playerStrings, gridSize } = meta;
+  const { players, gridSize } = meta;
 
   const gameStateUpdates: Partial<GameV2State> = {};
   const gameMetaUpdates: Partial<GameV2Meta> = {
@@ -79,7 +77,7 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
   };
 
   const [minType, lineI, lineJ] = line;
-  const curPlayerIndex = playerStrings.indexOf(currentPlayer);
+  const curPlayerIndex = players.findIndex(player => player.userID === currentPlayer);
   if (minType === "h") {
     hlines[lineI][lineJ] = currentPlayer;
     gameStateUpdates.hlines = hlines;
@@ -116,7 +114,7 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
         .shift()?.userID;
     }
   } else {
-    gameStateUpdates.currentPlayer = playerStrings[curPlayerIndex === playerStrings.length - 1 ? 0 : curPlayerIndex + 1];
+    gameStateUpdates.currentPlayer = (players[curPlayerIndex === players.length - 1 ? 0 : curPlayerIndex + 1]).userID;
   }
 
   return {
@@ -133,8 +131,8 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
 
 export function getLineFromXY(x: number, y: number, { state, meta }: ClientGameV2): Line | null {
   const { hlines, vlines } = state;
-  const { gridSize } = meta;
-  const boxSize = (SCREEN_SIZE - 40) / gridSize;
+  const { gridSize, width } = meta;
+  const boxSize = (width - 40) / gridSize;
 
   let minDistance = Infinity;
   let minLine: Line | null = null;
