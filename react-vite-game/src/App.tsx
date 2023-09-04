@@ -130,7 +130,7 @@ function UserInfoPanel({ userID, score }: UserInfo) {
   return (
     <div>
       <pre>
-        DOGGO: {userID}<br/>
+        cato: {userID}<br/>
         Score: {score}
       </pre>
     </div>
