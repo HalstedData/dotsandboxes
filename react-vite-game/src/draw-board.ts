@@ -97,15 +97,18 @@ export function displayScores(context: CanvasRenderingContext2D, { state, meta }
 
 
   const scoreByUserID = players
-    .map(player => player.userID)
-    .reduce((acc, userID) => ({
+    .reduce((acc, { userID, score }) => ({
       ...acc,
-      [userID]: squares.flat().filter((s) => s === userID).length
-    }), {} as Record<string, number>);
+      [userID]: {
+        score,
+        squares: squares.flat().filter((s) => s === userID).length,
+      }
+    }), {} as Record<string, { score: number, squares: number }>);
 
-  const youScore = scoreByUserID[myPlayerId];
-  const [opponentUserID, opponentScore] = Object.entries(scoreByUserID)
+  const { score: youScore, squares: youSquares } = scoreByUserID[myPlayerId];
+  const [opponentUserID, opponent] = Object.entries(scoreByUserID)
     .find(([compareID]) => compareID !== myPlayerId) || [];
+  const { score: opponentScore, squares: opponentSquares } = opponent || {};
 
   context.font = "bold 24px sans-serif";
   context.fillStyle = BLACK;
@@ -119,13 +122,13 @@ export function displayScores(context: CanvasRenderingContext2D, { state, meta }
 
   context.fillStyle = BLACK;
   context.fillText(
-    `You: ${youScore}`,
+    `You (${youScore}): ${youSquares}`,
     20,
     width + SCORE_AREA_HEIGHT / 2 - 10
   );
 
   context.fillText(
-    `${opponentUserID}: ${opponentScore}`,
+    `${opponentUserID} (${opponentScore}): ${opponentSquares}`,
     20,
     width + SCORE_AREA_HEIGHT / 2 + 30
   );

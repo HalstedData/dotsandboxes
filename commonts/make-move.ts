@@ -138,7 +138,7 @@ export function getLineFromXY(x: number, y: number, { state, meta }: ClientGameV
   let minLine: Line | null = null;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
-      const midH = [j * boxSize + boxSize / 2, i * boxSize];
+      const midH = [20 + j * boxSize + boxSize / 2, 20 + i * boxSize]; // Include the offset
       const distanceH = Math.hypot(midH[0] - x, midH[1] - y);
       if (
         j < gridSize &&
@@ -151,7 +151,7 @@ export function getLineFromXY(x: number, y: number, { state, meta }: ClientGameV
     }
 
     for (let j = 0; j < gridSize + 1; j++) {
-      const midV = [j * boxSize, i * boxSize + boxSize / 2];
+      const midV = [20 + j * boxSize, 20 + i * boxSize + boxSize / 2]; // Include the offset
       const distanceV = Math.hypot(midV[0] - x, midV[1] - y);
       if (
         i < gridSize &&
