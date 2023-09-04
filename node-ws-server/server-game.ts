@@ -30,7 +30,7 @@ export function newGame(params: NewGameParams) {
 };
 
 
-export function handleGameOver(gameId: string) {
+export async function handleGameOver(gameId: string) {
   const game = gamesInProgress[gameId];
   const { gridSize, players, winnerUserID } = game.meta;
   const { isGameOver, squares } = game.state;
@@ -39,45 +39,46 @@ export function handleGameOver(gameId: string) {
   }
   fs.writeFileSync(`./json/games/game-${gameId}.json`, JSON.stringify(game.meta, null, 2));
 
-  const updateUserScores = async () => {
-
-    const allUpdates = players.map(player => {
-      const { userID, score: beforeScore } = player;
-      const squarePerc = squares.flat().filter(square => square === player.userID).length / squares.flat().length;
-      const otherUsersScores = players
-        .filter(({ userID: otherUserID, }) => otherUserID !== userID)
-        .map(({ score: otherUserScore }) => otherUserScore);
-      const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
-      const isWinner = winnerUserID === userID;
-      const diff = avgScoreOtherUsers - beforeScore;
-      const changeAffectBySquarePerc = diff * squarePerc;
-      const update = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
-      return {
-        userID,
-        beforeScore,
-        update,
-      }
-    });
-    for (let { userID, update } of allUpdates) {
-      await updateUserScore(userID, update);
+  // update user scores
+  const allUpdates = players.map(player => {
+    const { userID, score: beforeScore } = player;
+    const squarePerc = squares.flat().filter(square => square === player.userID).length / squares.flat().length;
+    const otherUsersScores = players
+      .filter(({ userID: otherUserID, }) => otherUserID !== userID)
+      .map(({ score: otherUserScore }) => otherUserScore);
+    const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
+    const isWinner = winnerUserID === userID;
+    const diff = avgScoreOtherUsers - beforeScore;
+    const changeAffectBySquarePerc = diff * squarePerc;
+    const update = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
+    return {
+      userID,
+      beforeScore,
+      update,
+      newScore: Math.round(beforeScore + update),
     }
-  };
-
-  updateUserScores();
+  });
+  for (let { userID, newScore } of allUpdates) {
+    await updateUserScore(userID, newScore);
+  }
 
   const startNewGameWithSameSettings = (gameId: string) => {
     if (!game) {
       return console.error('no game found');
     }
     delete gamesInProgress[gameId];
+    const newPlayers = allUpdates.map(player => ({
+      userID: player.userID,
+      score: player.newScore
+    }));
     const newGameId = newGame({
       gridSize,
-      players,
+      players: newPlayers,
     });
     emitToPlayers(players, 'game-on', {
       gameId: newGameId,
       gridSize,
-      players,
+      players: newPlayers,
     });
   };
   setTimeout(() => startNewGameWithSameSettings(gameId), 8000);

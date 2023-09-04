@@ -79,7 +79,7 @@ export function emitToPlayers<Event extends keyof ServerToClientEvents>(
 }
 
 
-export async function updateUserScore(userID: string, change: number) {
+export async function updateUserScore(userID: string, newScore: number) {
   console.log(`updating score for ${userID}`);
   const userInfo = await getUserByID(userID);
   if (!userInfo) {
@@ -88,7 +88,7 @@ export async function updateUserScore(userID: string, change: number) {
   const newUserInfo: UserInfo = {
     ...userInfo,
     authToken: uuid.v4(),
-    score: Math.round(userInfo.score + change)
+    score: newScore,
   };
   console.log(`saving score update: before ${userInfo.score} after ${newUserInfo.score}`);
   await saveUserInfo(newUserInfo);
