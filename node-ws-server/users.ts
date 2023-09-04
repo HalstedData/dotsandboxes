@@ -53,7 +53,7 @@ export function emitToUsers<Event extends keyof ServerToClientEvents>(
 ) {
   const matchingSockets = userIDs
     .map(playerUserID => {
-      const playerSocketIDs = userIDsToSockets[playerUserID];
+      const playerSocketIDs = userIDsToSockets[playerUserID] || [];
       return {
         playerUserID,
         playerSocketIDs,
