@@ -56,6 +56,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
       lineCols += ` ${color}\n`;
       context.strokeStyle = color; // Set the stroke color here
+      context.closePath();
       context.stroke();
       context.closePath();
     }
@@ -81,6 +82,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
         context.lineTo(20 + j * boxSize, 20 + (i + 1) * boxSize);
         context.strokeStyle = color; // Set the stroke color here
         lineCols += ` ${color}\n`;
+        context.closePath();
         context.stroke();
         context.closePath();
       }
