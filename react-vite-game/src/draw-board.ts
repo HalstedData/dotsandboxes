@@ -41,6 +41,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
   const { gridSize, width, players } = meta;
   const boxSize = (width - 40) / gridSize;
   context.lineWidth = LINE_THICKNESS;
+  let lineCols = ``;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
       const curSquare = hlines[i][j];
@@ -53,11 +54,15 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.beginPath();
       context.moveTo(20 + j * boxSize, 20 + i * boxSize);
       context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
+      lineCols += ` ${color}\n`;
       context.strokeStyle = color; // Set the stroke color here
       context.stroke();
       context.closePath();
     }
   }
+
+  alert(lineCols);
+  lineCols = '';
 
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize + 1; j++) {
@@ -66,14 +71,16 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
         const curSquare = vlines[i][j];
         const colorIndex = curSquare !== null ? players.findIndex(player => player.userID === curSquare) : -1;
         const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
-  
+
         // Reset stroke style
         context.strokeStyle = LIGHT_GRAY;
-  
+
+
         context.beginPath();
         context.moveTo(20 + j * boxSize, 20 + i * boxSize);
-        context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
+        context.lineTo(20 + j * boxSize, 20 + (i + 1) * boxSize);
         context.strokeStyle = color; // Set the stroke color here
+        lineCols += ` ${color}\n`;
         context.stroke();
         context.closePath();
       }
@@ -89,6 +96,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.fill();
     }
   }
+  alert(lineCols);
 }
 
 export function displayScores(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
