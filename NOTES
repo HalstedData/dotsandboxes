@@ -1,0 +1,6 @@
+[ ] 1. get rid of "computer" opponent ..... default to human functionality
+[ ] 2. thicken the line of the last line that has been played by each player
+[ ] 3. UserInfo component
+[x] 4. default the username to pinkmonkey23 ... etc.
+[ ] 5. playerString instead of username: string should include their scores at the beginning of the game
+[ ] 6. running all dev scripts at once

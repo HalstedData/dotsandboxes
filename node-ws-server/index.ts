@@ -91,6 +91,15 @@ io.on('connection', socket => {
     if (!gameInProgress) {
       return console.error("Invalid gameId.  Game not found.");
     }
+
+
+    // validate this is their turn
+
+    if (gameInProgress.state.currentPlayer !== userID) {
+      return console.error(`This person tried to make a move when it wasn't their turn: ${userID}`);
+    }
+
+
     const nextGame = applyLine(move, gameInProgress);
     gamesInProgress[gameId] = nextGame;
 
@@ -102,7 +111,6 @@ io.on('connection', socket => {
       handleGameOver(gameId);
     }
 
-    // validate this is their turn
 
     // update the gameState on the server
 

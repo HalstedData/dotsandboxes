@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "socket.io": "^4.7.2",
+    "unique-username-generator": "^1.2.0",
     "uuid": "^9.0.0"
   }
 }

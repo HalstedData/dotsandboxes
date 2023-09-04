@@ -3,7 +3,7 @@ import { ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
 import * as uuid from 'uuid';
 import { Socket } from 'socket.io';
 import { io } from '.';
-
+import { generateUsername } from "unique-username-generator";
 export const userIDsToSockets: Record<string, Socket["id"][]> = {};
 
 export async function getUserByID(userID: string): Promise<UserInfo | null> {
@@ -38,7 +38,7 @@ export async function saveUserInfo(userInfo: UserInfo) {
 
 export async function createNewUser(): Promise<UserInfo> {
   const userInfo: UserInfo = {
-    userID: uuid.v4(),
+    userID: generateUsername(),
     authToken: uuid.v4(),
     score: 100,
   };
