@@ -38,22 +38,22 @@ export function fillBoxes(context: CanvasRenderingContext2D, { state, meta }: Cl
 }
 export function drawLines(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
   const { hlines, vlines, } = state;
-  const { gridSize, width } = meta;
+  const { gridSize, width, players } = meta;
   const boxSize = (width - 40) / gridSize;
   context.lineWidth = LINE_THICKNESS;
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
       const curSquare = hlines[i][j];
+      const colorIndex = curSquare !== null ? players.findIndex(player => player.userID === curSquare) : -1;
+      const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
+
+      // Reset stroke style
       context.strokeStyle = LIGHT_GRAY;
-      if (curSquare) {
-        const curColor = PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)];
-        if (curColor) {
-          context.strokeStyle = curColor;
-        }
-      }
+
       context.beginPath();
       context.moveTo(20 + j * boxSize, 20 + i * boxSize);
       context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
+      context.strokeStyle = color; // Set the stroke color here
       context.stroke();
       context.closePath();
     }
@@ -64,16 +64,16 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.strokeStyle = LIGHT_GRAY;
       if (i < gridSize) {
         const curSquare = vlines[i][j];
+        const colorIndex = curSquare !== null ? players.findIndex(player => player.userID === curSquare) : -1;
+        const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
+  
+        // Reset stroke style
         context.strokeStyle = LIGHT_GRAY;
-        if (curSquare) {
-          const curColor = PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)];
-          if (curColor) {
-            context.strokeStyle = curColor;
-          }
-        }
+  
         context.beginPath();
         context.moveTo(20 + j * boxSize, 20 + i * boxSize);
-        context.lineTo(20 + j * boxSize, 20 + (i + 1) * boxSize);
+        context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
+        context.strokeStyle = color; // Set the stroke color here
         context.stroke();
         context.closePath();
       }

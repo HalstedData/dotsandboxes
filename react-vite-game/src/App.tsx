@@ -130,7 +130,7 @@ function UserInfoPanel({ userID, score }: UserInfo) {
   return (
     <div>
       <pre>
-        You're: {userID}<br/>
+        You are rrrre: {userID}<br/>
         Score: {score}
       </pre>
     </div>
