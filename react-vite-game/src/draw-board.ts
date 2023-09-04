@@ -50,6 +50,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.moveTo(20 + j * boxSize, 20 + i * boxSize);
       context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
       context.stroke();
+      context.closePath();
     }
   }
 
@@ -63,6 +64,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
         context.moveTo(20 + j * boxSize, 20 + i * boxSize);
         context.lineTo(20 + j * boxSize, 20 + (i + 1) * boxSize);
         context.stroke();
+        context.closePath();
       }
       context.fillStyle = BLACK;
       context.beginPath();
