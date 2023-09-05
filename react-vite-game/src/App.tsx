@@ -109,7 +109,7 @@ function App() {
                 <option value="3">3x3</option>
                 <option value="4">4x4</option>
                 <option value="5">5x5</option>
-              </select><br />
+              </select>
               {/* <label htmlFor="opponent">Opponent:</label>
             <select id="opponent">
               <option value="computer">Computer</option>

@@ -60,6 +60,7 @@ button {
   border: 1px solid black;
   border-radius: 5px;
   padding: 5px 10px;
+  cursor: pointer;
 }
 
 label {
@@ -82,11 +83,31 @@ label {
 
 
 .panel {
-  background-color: rgba(300, 100, 100, 0.6);
+  background-color: rgb(100 194 255 / 60%);
   padding: 1vh 2vw;
+  margin-bottom: 1em;
   display: flex;
   justify-content: center;
   align-items: center;
-  zoom: 1.5;
-  min-height: 10vh;
+  zoom: 1.2;
+  min-height: 1.5em;
+}
+.panel button {
+  background: #001f80;
+  color: #fff;
+  font-size: 108%;
+}
+
+#options {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+#grid-size {
+  margin-right: 1em;
+}
+
+h3 {
+  margin: 0;
 }
