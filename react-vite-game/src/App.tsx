@@ -100,29 +100,33 @@ function App() {
     <>
       <h1 id="game-title">Dots and Boxes</h1>
 
-      <Panel>
-        {
-          !gameInProgress && !socketStatus && (
-            <div id="options">
-              <label htmlFor="grid-size">Grid Size:</label>
-              <select id="grid-size">
-                <option value="3">3x3</option>
-                <option value="4">4x4</option>
-                <option value="5">5x5</option>
-              </select>
-              {/* <label htmlFor="opponent">Opponent:</label>
-            <select id="opponent">
-              <option value="computer">Computer</option>
-              <option value="human">Human</option>
-            </select><br /> */}
-              <button id="start-button" onClick={startGameHandler}>Start Game</button>
-            </div>
-          )
-        }
-        {
-          socketStatus && <h3>{socketStatus}...</h3>
-        }
-      </Panel>
+      {
+        !gameInProgress && (
+
+          <Panel>
+            {
+              !socketStatus ? (
+                <div id="options">
+                  <label htmlFor="grid-size">Grid Size:</label>
+                  <select id="grid-size">
+                    <option value="3">3x3</option>
+                    <option value="4">4x4</option>
+                    <option value="5">5x5</option>
+                  </select>
+                  {/* <label htmlFor="opponent">Opponent:</label>
+  <select id="opponent">
+    <option value="computer">Computer</option>
+    <option value="human">Human</option>
+  </select><br /> */}
+                  <button id="start-button" onClick={startGameHandler}>Start Game</button>
+                </div>
+              ) : (
+                <h3>{socketStatus}...</h3>
+              )
+            }
+          </Panel>
+        )
+      }
       {
         !gameInProgress && (
           <Leaderboard leaderboard={leaderboard} userInfo={userInfo} />

@@ -59,7 +59,7 @@ function Game(props: GameProps) {
     console.log('sizing canvas')
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
-    const canvasWidth = Math.min(600, width);
+    const canvasWidth = Math.min(600, width - 40);
     canvasEl.width = canvasWidth;
     canvasEl.height = canvasWidth + SCORE_AREA_HEIGHT;
 
