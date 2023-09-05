@@ -24,14 +24,14 @@ const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 function Game(props: GameProps) {
   const { width, height } = useWindowSize()
   const { gameInProgress, socket, onReset, onGoHome, userInfo } = props;
-  const { gridSize, players, gameId } = gameInProgress;
+  const { gridSize, players, gameID } = gameInProgress;
   // const [showingConfetti, setShowingConfetti] = useState(false);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [clientGame, setClientGame] = useState<ClientGameV2>({
     meta: {
       gridSize,
       players,
-      gameId,
+      gameID,
       width: Math.min(600, width),
       moveOrder: [],
       myPlayerId: userInfo.userID,
@@ -89,13 +89,13 @@ function Game(props: GameProps) {
     if (!line) return;
     const nextClientGame = applyLine(line, clientGame);
     setClientGame(nextClientGame);
-    console.log(`sending line for gameID ${gameId}`);
-    gameId && socket.emit('send-line', line, gameId);
+    console.log(`sending line for gameID ${gameID}`);
+    gameID && socket.emit('send-line', line, gameID);
   };
 
-  const receiveLineHandler = useCallback((line: Line, gameId: string) => {
-    // console.log('receiv', gameId, meta.gameId)
-    if (gameId !== meta.gameId) {
+  const receiveLineHandler = useCallback((line: Line, gameID: string) => {
+    // console.log('receiv', gameID, meta.gameID)
+    if (gameID !== meta.gameID) {
       return;
     }
     console.log('receiving move cur player', clientGame.state.currentPlayer);
@@ -112,7 +112,7 @@ function Game(props: GameProps) {
         gridSize: meta.gridSize
       });
       await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 2000));
-      receiveLineHandler(chosenMove, meta.gameId);
+      receiveLineHandler(chosenMove, meta.gameID);
     }
 
     console.log('computer????', state);

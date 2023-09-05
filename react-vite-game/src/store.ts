@@ -2,6 +2,7 @@ import { create } from 'zustand';
 import { GameInProgress, GameSocket } from './App';
 import { UserInfo } from '../../commonts/types';
 import { io } from 'socket.io-client';
+import { LeaderboardType } from '../../node-ws-server/leaderboard';
 
 type AppState = {
   socket: GameSocket;
@@ -12,6 +13,8 @@ type AppState = {
   newGame: (gameInProgress: GameInProgress | null) => void;
   setSocketStatus: (socketStatus: string) => void;
   setUserInfo: (userInfo: UserInfo) => void;
+  leaderboard: LeaderboardType | null;
+  setLeaderboard: (Leaderboard: LeaderboardType) => void;
 }
 
 const initSocket = () => io(
@@ -31,6 +34,8 @@ const useAppStore = create<AppState>()((set, get) => ({
   }),
   setSocketStatus: (socketStatus) => set({ socketStatus }),
   setUserInfo: (userInfo) => set({ userInfo }),
+  leaderboard: null,
+  setLeaderboard: (leaderboard) => set({ leaderboard }),
 }));
 
 export default useAppStore;

@@ -1,23 +1,40 @@
+import { LeaderboardType } from "../node-ws-server/leaderboard";
+
 // APP/SOCKET RELATED
 export type UserAuth = { userID: string, authToken: string };
+export type GameResult = [
+  beforeScore: number,
+  winOrLoss: 'W' | 'L',
+  afterScore: number,
+  gameID: string,
+  ...opponentUserIDs: string[]
+];
+// export type GameResult = [
+//   beforeScore: number,
+//   winOrLoss: 'W' | 'L',
+//   afterScore: number,
+//   gameID: string,
+//   (string)?
+// ];
 export type UserInfo = UserAuth & {
-  gamesPlayed?: string[],  // gameId's
+  gamesPlayed?: GameResult[],  // gameID's
   score: number;
 };
 
-export type GameOnResponse = Pick<GameV2Meta, 'gameId' | 'gridSize' | 'players'>;
+export type GameOnResponse = Pick<GameV2Meta, 'gameID' | 'gridSize' | 'players'>;
 
 export type GameRequestResponse = GameOnResponse | 'waiting';
 
 export type ClientToServerEvents = {
   "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
-  "send-line": (line: Line, gameId: string) => void;
+  "send-line": (line: Line, gameID: string) => void;
 }
 export type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
-  "receive-line": (line: Line, gameId: string) => void;
+  "receive-line": (line: Line, gameID: string) => void;
   "user-info": (userInfo: UserInfo) => void;
   "player-disconnected": () => void;
+  "leaderboard": (leaderboard: LeaderboardType) => void;
 }
 
 // GAME RELATED
@@ -31,7 +48,7 @@ export type Player = {
   score: number;
 };
 export type GameV2Meta = {
-  gameId: string;
+  gameID: string;
   gridSize: number;
   players: Player[];
   moveOrder: Move[];

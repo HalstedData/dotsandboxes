@@ -1,13 +1,20 @@
-#root, body {
+#root,
+body {
   margin: 0 auto;
   padding: 0%;
+  padding-top: 1em;
   text-align: center;
-  font-family: monospace;
+  font-family: ui-monospace;
   background: #000;
   color: #FFF;
+  font-size: 110%;
 }
 
-#game-title {
+pre {
+  font-family: ui-monospace;
+}
+
+h1#game-title {
   padding-top: 10px;
   margin-top: 0;
 }
@@ -47,8 +54,39 @@ canvas {
   margin-top: 20px;
 }
 
-select, input, button {
+select,
+input,
+button {
   border: 1px solid black;
   border-radius: 5px;
   padding: 5px 10px;
+}
+
+label {
+  margin-right: 5px;
+}
+
+.leaderboard table {
+  margin: auto;
+  font-size: 150%;
+}
+
+.leaderboard table td {
+  background: lawngreen;
+  color: black;
+}
+.leaderboard table tr.isYou td {
+  background: orange;
+  font-weight: bold;
+}
+
+
+.panel {
+  background-color: rgba(300, 100, 100, 0.6);
+  padding: 1vh 2vw;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  zoom: 1.5;
+  min-height: 10vh;
 }

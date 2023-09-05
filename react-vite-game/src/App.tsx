@@ -1,26 +1,32 @@
-import { useEffect } from 'react'
+import { PropsWithChildren, useEffect } from 'react'
 import './App.css'
 import Game from './Game';
 import { Socket } from "socket.io-client";
 import { ClientGameV2, ClientToServerEvents, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';
+import Leaderboard from './Leaderboard';
 
-export type GameInProgress = Pick<ClientGameV2['meta'], 'gameId' | 'gridSize' | 'players'>;
+export type GameInProgress = Pick<ClientGameV2['meta'], 'gameID' | 'gridSize' | 'players'>;
 
 export type GameSocket = Socket<ServerToClientEvents, ClientToServerEvents>;
 let renderCount = 0;
+
+
+const Panel = ({ children }: PropsWithChildren) => <div className="panel">{children}</div>;
+
+
 function App() {
   console.log('appppp');
-  const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo } = useAppStore();
+  const { socket, gameKey, gameInProgress, socketStatus, userInfo, newGame, setSocketStatus, setUserInfo, leaderboard, setLeaderboard } = useAppStore();
   renderCount++;
   console.log('RENDER', userInfo, gameKey, socketStatus, renderCount);
   const handleGameOnResponse = ({
-    gameId,
+    gameID,
     gridSize,
     players
   }: Exclude<GameRequestResponse, string>) => {
     newGame({
-      gameId,
+      gameID,
       gridSize,
       players,
     });
@@ -35,7 +41,7 @@ function App() {
     // const opponent = (document.getElementById("opponent") as HTMLSelectElement)?.value as Opponent;
     // if (opponent === 'computer') {
     //   newGame({
-    //     gameId: '343',
+    //     gameID: '343',
     //     gridSize,
     //     players: [{'you', 'computer'],
     //     opponent,
@@ -69,6 +75,11 @@ function App() {
 
   useEffect(() => {
     socket.on('game-on', handleGameOnResponse);
+
+    socket.on('leaderboard', (leaderboard) => {
+      console.log(`setting leaderboard`, leaderboard);
+      setLeaderboard(leaderboard);
+    });
     socket.on('user-info', (userInfo) => {
       console.log(`setting user-info`, userInfo);
       setUserInfo(userInfo);
@@ -88,26 +99,34 @@ function App() {
   return (
     <>
       <h1 id="game-title">Dots and Boxes</h1>
-      {
-        !gameInProgress && !socketStatus && (
-          <div id="options">
-            <label htmlFor="grid-size">Grid Size:</label>
-            <select id="grid-size">
-              <option value="3">3x3</option>
-              <option value="4">4x4</option>
-              <option value="5">5x5</option>
-            </select><br />
-            {/* <label htmlFor="opponent">Opponent:</label>
+
+      <Panel>
+        {
+          !gameInProgress && !socketStatus && (
+            <div id="options">
+              <label htmlFor="grid-size">Grid Size:</label>
+              <select id="grid-size">
+                <option value="3">3x3</option>
+                <option value="4">4x4</option>
+                <option value="5">5x5</option>
+              </select><br />
+              {/* <label htmlFor="opponent">Opponent:</label>
             <select id="opponent">
               <option value="computer">Computer</option>
               <option value="human">Human</option>
             </select><br /> */}
-            <button id="start-button" onClick={startGameHandler}>Start Game</button>
-          </div>
-        )
-      }
+              <button id="start-button" onClick={startGameHandler}>Start Game</button>
+            </div>
+          )
+        }
+        {
+          socketStatus && <h3>{socketStatus}...</h3>
+        }
+      </Panel>
       {
-        socketStatus && <h3>{socketStatus}...</h3>
+        !gameInProgress && (
+          <Leaderboard leaderboard={leaderboard} userInfo={userInfo} />
+        )
       }
       {
         gameInProgress && userInfo &&
@@ -130,8 +149,8 @@ function UserInfoPanel({ userID, score }: UserInfo) {
   return (
     <div>
       <pre>
-        cato: {userID}<br/>
-        Score: {score}
+        your userID: {userID}<br />
+        your score: {score}
       </pre>
     </div>
   )

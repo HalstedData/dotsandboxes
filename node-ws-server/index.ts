@@ -2,7 +2,8 @@ import { Server } from 'socket.io';
 import { applyLine } from '../commonts/make-move';
 import { ClientToServerEvents, ServerToClientEvents, UserAuth, UserInfo } from '../commonts/types';
 import { createNewUser, emitToUsers, getUserByID, userIDsToSockets, validateUserAuth } from './users';
-import { gamesInProgress, handleGameOver, newGame, playerHasDisconnected } from './server-game';
+import { gamesInProgress, handleGameOver, newGame, playerHasDisconnected } from './game';
+import { getLeaderboard, updateLeaderboard } from './leaderboard';
 
 
 const waitingRooms: Map<number, string[]> = new Map();
@@ -41,6 +42,7 @@ io.on('connection', socket => {
     socket.emit('user-info', userInfo);
   };
   emitUserInfo();
+  socket.emit('leaderboard', getLeaderboard());
 
   socket.on('game-request', async (gridSize, cb) => {
     const { userID } = socket.data;
@@ -66,21 +68,21 @@ io.on('connection', socket => {
       userID: userInfo.userID,
       score: userInfo.score,
     }));
-    const newGameId = newGame({
+    const newGameID = newGame({
       gridSize,
       players,
     });
     matchingSockets.forEach(playerSocket => {
       // console.log({ playerSocket });
       playerSocket?.emit('game-on', ({
-        gameId: newGameId,
+        gameID: newGameID,
         // yourPlayerId: playerToMatch,
         gridSize,
         players,
       }));
     });
     cb({
-      gameId: newGameId,
+      gameID: newGameID,
       // yourPlayerId: socket.id,
       gridSize,
       players,
@@ -88,15 +90,15 @@ io.on('connection', socket => {
 
 
   });
-  socket.on('send-line', (move, gameId) => {
+  socket.on('send-line', (move, gameID) => {
     const { userID } = socket.data;
     // amount of times called 50x / 1 min ?
     // more than once in a half a second
 
-    const gameInProgress = gamesInProgress[gameId];
+    const gameInProgress = gamesInProgress[gameID];
 
     if (!gameInProgress) {
-      return console.error("Invalid gameId.  Game not found.");
+      return console.error("Invalid gameID.  Game not found.");
     }
 
 
@@ -108,14 +110,14 @@ io.on('connection', socket => {
 
 
     const nextGame = applyLine(move, gameInProgress);
-    gamesInProgress[gameId] = nextGame;
+    gamesInProgress[gameID] = nextGame;
 
     const { players } = nextGame.meta;
     const { isGameOver } = nextGame.state;
 
     if (isGameOver) {
       console.log('GAME OVER');
-      handleGameOver(gameId);
+      handleGameOver(gameID);
     }
 
 
@@ -135,7 +137,7 @@ io.on('connection', socket => {
       players
         .map(player => player.userID)
         .filter(playerUserId => playerUserId !== userID),
-      'receive-line', move, gameId
+      'receive-line', move, gameID
     );
   });
   socket.on('disconnect', () => {
@@ -151,3 +153,5 @@ io.on('connection', socket => {
 });
 
 io.listen(3003);
+
+updateLeaderboard();

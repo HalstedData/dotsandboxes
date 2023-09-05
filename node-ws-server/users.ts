@@ -1,9 +1,10 @@
 import fs from 'fs';
-import { Player, ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
+import { GameResult, Player, ServerToClientEvents, UserAuth, UserInfo } from "../commonts/types";
 import * as uuid from 'uuid';
 import { Socket } from 'socket.io';
 import { io } from '.';
 import { generateUsername } from "unique-username-generator";
+import { userInfo } from 'os';
 export const userIDsToSockets: Record<string, Socket["id"][]> = {};
 
 export async function getUserByID(userID: string): Promise<UserInfo | null> {
@@ -79,7 +80,7 @@ export function emitToPlayers<Event extends keyof ServerToClientEvents>(
 }
 
 
-export async function updateUserScore(userID: string, newScore: number) {
+export async function updateUserAfterGame(userID: string, gameResult: GameResult) {
   console.log(`updating score for ${userID}`);
   const userInfo = await getUserByID(userID);
   if (!userInfo) {
@@ -87,10 +88,21 @@ export async function updateUserScore(userID: string, newScore: number) {
   }
   const newUserInfo: UserInfo = {
     ...userInfo,
+    gamesPlayed: [...userInfo.gamesPlayed || [], gameResult],
     authToken: uuid.v4(),
-    score: newScore,
+    score: gameResult[2],
   };
   console.log(`saving score update: before ${userInfo.score} after ${newUserInfo.score}`);
   await saveUserInfo(newUserInfo);
   emitToUsers([userID], 'user-info', newUserInfo);
+}
+
+export async function getAllUsers(): Promise<UserInfo[]> {
+  const allUserList = fs.readdirSync('./json/users')
+    .filter(fileName => fileName.endsWith('.json'))
+    .map(fileName => fileName.split('.json').shift()?.slice(5))
+    .filter((fileName): fileName is string => !!fileName);
+  console.log({ allUserList })
+  const allUserInfos = await Promise.all(allUserList.map(userID => getUserByID(userID)));
+  return allUserInfos.filter((userInfo): userInfo is UserInfo => !!userInfo);
 }

@@ -1,18 +1,19 @@
 import fs from 'fs';
-import { GameV2 } from "../commonts/types";
+import { GameResult, GameV2 } from "../commonts/types";
 import { v4 as uuidv4 } from 'uuid';
-import { emitToPlayers, emitToUsers, getUserByID, updateUserScore, userIDsToSockets } from './users';
+import { emitToPlayers, updateUserAfterGame } from './users';
 import { io } from '.';
+import { handleGameResults } from './leaderboard';
 
 type NewGameParams = Pick<GameV2["meta"], 'gridSize' | 'players'>;
-export const gamesInProgress: Record<GameV2["meta"]["gameId"], GameV2> = {};
+export const gamesInProgress: Record<GameV2["meta"]["gameID"], GameV2> = {};
 
 export function newGame(params: NewGameParams) {
   const { gridSize, players } = params;
   const id = uuidv4();
   const gameV2: GameV2 = {
     meta: {
-      gameId: id,
+      gameID: id,
       gridSize,
       players,
       moveOrder: [],
@@ -30,58 +31,64 @@ export function newGame(params: NewGameParams) {
 };
 
 
-export async function handleGameOver(gameId: string) {
-  const game = gamesInProgress[gameId];
+export async function handleGameOver(gameID: string) {
+  const game = gamesInProgress[gameID];
   const { gridSize, players, winnerUserID } = game.meta;
   const { isGameOver, squares } = game.state;
   if (!isGameOver || !winnerUserID) {
     return console.error('handling game over but !isGameOver || !winnerUserID')
   }
-  fs.writeFileSync(`./json/games/game-${gameId}.json`, JSON.stringify(game.meta, null, 2));
+  fs.writeFileSync(`./json/games/game-${gameID}.json`, JSON.stringify(game.meta, null, 2));
 
   // update user scores
-  const allUpdates = players.map(player => {
+  const allResults: Array<{
+    userID: string;
+    gameResult: GameResult
+  }> = players.map(player => {
     const { userID, score: beforeScore } = player;
     const squarePerc = squares.flat().filter(square => square === player.userID).length / squares.flat().length;
-    const otherUsersScores = players
-      .filter(({ userID: otherUserID, }) => otherUserID !== userID)
+    const otherUsers = players
+      .filter(({ userID: otherUserID, }) => otherUserID !== userID);
+    const otherUsersScores = otherUsers
       .map(({ score: otherUserScore }) => otherUserScore);
     const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
     const isWinner = winnerUserID === userID;
     const diff = avgScoreOtherUsers - beforeScore;
     const changeAffectBySquarePerc = diff * squarePerc;
-    const update = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
+    const scoreChange = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
+    const newScore = Math.round(beforeScore + scoreChange);
+    const gameResult = [beforeScore, isWinner ? 'W' : 'L', newScore, ...otherUsers.map(player => player.userID)] as GameResult;
     return {
       userID,
-      beforeScore,
-      update,
-      newScore: Math.round(beforeScore + update),
-    }
+      gameResult,
+    };
   });
-  for (let { userID, newScore } of allUpdates) {
-    await updateUserScore(userID, newScore);
+  for (let { userID, gameResult } of allResults) {
+    await updateUserAfterGame(userID, gameResult);
   }
 
-  const startNewGameWithSameSettings = (gameId: string) => {
+  await handleGameResults(allResults.map(({ gameResult }) => gameResult));
+
+  const startNewGameWithSameSettings = (gameID: string) => {
     if (!game) {
       return console.error('no game found');
     }
-    delete gamesInProgress[gameId];
-    const newPlayers = allUpdates.map(player => ({
+    delete gamesInProgress[gameID];
+    const newPlayers = allResults.map(player => ({
       userID: player.userID,
-      score: player.newScore
+      score: player.gameResult[2]
     }));
-    const newGameId = newGame({
+    const newGameID = newGame({
       gridSize,
       players: newPlayers,
     });
     emitToPlayers(players, 'game-on', {
-      gameId: newGameId,
+      gameID: newGameID,
       gridSize,
       players: newPlayers,
     });
   };
-  setTimeout(() => startNewGameWithSameSettings(gameId), 8000);
+  setTimeout(() => startNewGameWithSameSettings(gameID), 8000);
 }
 
 export function playerHasDisconnected(userID: string) {
@@ -89,5 +96,5 @@ export function playerHasDisconnected(userID: string) {
     .find(game => game.meta.players.some(player => player.userID === userID));
   if (!gameInProgress) return;
   emitToPlayers(gameInProgress.meta.players, 'player-disconnected');
-  delete gamesInProgress[gameInProgress.meta.gameId];
+  delete gamesInProgress[gameInProgress.meta.gameID];
 }

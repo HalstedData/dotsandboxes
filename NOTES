@@ -4,3 +4,4 @@
 [x] 4. default the username to pinkmonkey23 ... etc.
 [x] 5. playerString instead of username: string should include their scores at the beginning of the game
 [ ] 6. running all dev scripts at once
+[ ] 7. computer player server side
