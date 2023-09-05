@@ -57,7 +57,9 @@ canvas {
 select,
 input,
 button {
-  border: 1px solid black;
+  background: #001f80;
+  color: #fff;
+  border: 1px solid white;
   border-radius: 5px;
   padding: 5px 10px;
   cursor: pointer;
@@ -73,9 +75,10 @@ label {
 }
 
 .leaderboard table td {
-  background: lawngreen;
+  background: rgba(255, 166, 0, 0.7);
   color: black;
 }
+
 .leaderboard table tr.isYou td {
   background: orange;
   font-weight: bold;
@@ -90,11 +93,10 @@ label {
   justify-content: center;
   align-items: center;
   zoom: 1.2;
-  min-height: 1.5em;
+  min-height: 2.5em;
 }
+
 .panel button {
-  background: #001f80;
-  color: #fff;
   font-size: 108%;
 }
 
@@ -102,6 +104,11 @@ label {
   display: flex;
   gap: 5px;
   align-items: center;
+}
+
+.panel label {
+  font-weight: 700;
+  font-size: 110%;
 }
 
 #grid-size {
