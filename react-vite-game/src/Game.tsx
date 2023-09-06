@@ -2,7 +2,6 @@ import { useCallback, useEffect, } from 'react';
 import { useRef, useState } from 'react'
 import drawBoard from './draw-board';
 import { applyLine, getLineFromXY, } from '../../commonts/make-move';
-import getComputerMove from './get-computer-move';
 import useGameStatus from './use-game-status';
 import { GameInProgress, GameSocket } from './App';
 import { ClientGameV2, Line, UserInfo } from '../../commonts/types';
@@ -104,25 +103,25 @@ function Game(props: GameProps) {
     );
   }, [clientGame]);
 
-  useEffect(() => {
-    async function makeComputerMove() {
-      console.log('ITS A COMPUTER MOVE')
-      const chosenMove = await getComputerMove({
-        ...state,
-        gridSize: meta.gridSize
-      });
-      await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 2000));
-      receiveLineHandler(chosenMove, meta.gameID);
-    }
+  // useEffect(() => {
+  //   async function makeComputerMove() {
+  //     console.log('ITS A COMPUTER MOVE')
+  //     const chosenMove = await getComputerMove({
+  //       ...state,
+  //       gridSize: meta.gridSize
+  //     });
+  //     await new Promise(resolve => setTimeout(resolve, 300 + Math.random() * 2000));
+  //     receiveLineHandler(chosenMove, meta.gameID);
+  //   }
 
-    console.log('computer????', state);
+  //   console.log('computer????', state);
 
-    if (!state.isGameOver && state.currentPlayer === 'computer') {
-      // its time for a computer move!
-      makeComputerMove();
-    };
+  //   if (!state.isGameOver && state.currentPlayer === 'computer') {
+  //     // its time for a computer move!
+  //     makeComputerMove();
+  //   };
 
-  }, [clientGame]);
+  // }, [clientGame]);
 
   useEffect(() => {
     console.log('added receive move handler');

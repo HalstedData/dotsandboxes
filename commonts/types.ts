@@ -4,7 +4,7 @@ import { LeaderboardType } from "../node-ws-server/leaderboard";
 export type UserAuth = { userID: string, authToken: string };
 export type GameResult = [
   beforeScore: number,
-  winOrLoss: 'W' | 'L',
+  winOrLoss: 'W' | 'L' | 'DROPPED' | 'OPP-DROPPED',
   afterScore: number,
   gameID: string,
   ...opponentUserIDs: string[]
