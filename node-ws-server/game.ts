@@ -145,7 +145,7 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
     setTimeout(async () => {
       const computerMove = await getComputerMove(nextGame);
       receiveLineFromUserID(computerMove, nextGame.state.currentPlayer, nextGame.meta.gameID);
-    }, 1000 * 5);
+    }, 1000 * 0.5);
   }
 }
 
