@@ -157,23 +157,26 @@ export async function playerHasDisconnected(userID: string) {
   if (!gameInProgress) return;
   const { players, gameID } = gameInProgress.meta;
   emitToPlayers(players, 'player-disconnected');
+  const gameResults: GameResult[] = [];
   for (let player of players) {
     const isPlayerThatDisconnected = player.userID === userID;
     const opponentUserIDs = players
       .filter(comparePlayer => comparePlayer.userID !== player.userID)
       .map(player => player.userID);
+    const gameResult: GameResult = [
+      player.score,
+      isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
+      player.score + (isPlayerThatDisconnected ? -30 : 30),
+      gameID,
+      ...opponentUserIDs,
+    ];
     await updateUserAfterGame(
       player.userID,
-      [
-        player.score,
-        isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
-        player.score + (isPlayerThatDisconnected ? -30 : 30),
-        gameID,
-        ...opponentUserIDs,
-      ],
+      gameResult,
       isPlayerThatDisconnected
     );
   }
+  await handleGameResults(gameResults);
 
   delete gamesInProgress[gameInProgress.meta.gameID];
 }
