@@ -175,6 +175,7 @@ export async function playerHasDisconnected(userID: string) {
       gameResult,
       isPlayerThatDisconnected
     );
+    gameResults.push(gameResult);
   }
   await handleGameResults(gameResults);
 

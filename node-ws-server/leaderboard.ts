@@ -38,7 +38,7 @@ export async function handleGameResults(gameResults: GameResult[]) {
   );
   const lowestScoreOnLeaderboardCurrently = l.entries[l.entries.length - 1].score;
   const needsUpdating = highestScore >= lowestScoreOnLeaderboardCurrently;
-  console.log({ highestScore, lowestScoreOnLeaderboardCurrently, needsUpdating })
+  // console.log({ highestScore, lowestScoreOnLeaderboardCurrently, needsUpdating })
   if (needsUpdating) {
     return updateLeaderboard();
   }
