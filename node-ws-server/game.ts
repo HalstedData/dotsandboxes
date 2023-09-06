@@ -143,7 +143,9 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
 
   if (!nextGame.state.isGameOver && COMPUTER_PLAYER_USER_IDS.includes(nextGame.state.currentPlayer)) {
     setTimeout(async () => {
+      console.log('getting computer move');
       const computerMove = await getComputerMove(nextGame);
+      console.log('got computer move', computerMove);
       receiveLineFromUserID(computerMove, nextGame.state.currentPlayer, nextGame.meta.gameID);
     }, 1000 * 0.5);
   }
