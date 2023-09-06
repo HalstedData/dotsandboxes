@@ -104,9 +104,9 @@ function scheduleCheckForWaiting(gridSize: number) {
   );
 }
 
-createNewUser({
-  userID: 'pinkmonkey23'
-})
+// createNewUser({
+//   userID: 'pinkmonkey23'
+// })
 
 io.on('connection', socket => {
   console.log('new connection', socket.data);
