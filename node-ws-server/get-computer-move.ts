@@ -11,7 +11,7 @@ export default async function getComputerMove({ meta, state, }: ServerGameV2): P
 
   // const { host } = window.location;
   // const inDevMode = ['127.0.0.1', 'localhost'].some(h => host.includes(h));
-  const requestHost = true ? 'http://127.0.0.1:5000' : 'https://chiefsmurph.com/dotsandboxes';
+  const requestHost = true ? 'http://127.0.0.1:5000' : 'http://38.108.119.159/:5000'// 'https://chiefsmurph.com/dotsandboxes';
 
   const response = await axios.post<{computer_move: Line }>(
     `${requestHost}/get-computer-move`,
