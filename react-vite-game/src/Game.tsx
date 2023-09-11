@@ -5,8 +5,9 @@ import { applyLine, getLineFromXY, } from '../../commonts/make-move';
 import useGameStatus from './use-game-status';
 import { GameInProgress, GameSocket } from './App';
 import { ClientGameV2, Line, UserInfo } from '../../commonts/types';
-import { useWindowSize } from 'react-use'
-import Confetti from 'react-confetti'
+import { useWindowSize } from 'react-use';
+import Confetti from 'react-confetti';
+import { Textfit } from 'react-textfit';
 
 export type GameProps = {
   onReset: () => void;
@@ -16,9 +17,7 @@ export type GameProps = {
   userInfo: UserInfo;
 }
 
-const SCREEN_SIZE = 600;
 const SCORE_AREA_HEIGHT = 100;
-const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
 function Game(props: GameProps) {
   const { width, height } = useWindowSize()
@@ -131,7 +130,13 @@ function Game(props: GameProps) {
 
   return (
     <div id="game-section">
-      <h2 id="game-status">{gameStatus}</h2>
+      <Textfit
+        mode="single"
+        max={30}
+        forceSingleModeWidth={true}
+      >
+        {gameStatus}
+      </Textfit>
       <canvas
         id="game-canvas"
         ref={canvasRef}

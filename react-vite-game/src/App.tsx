@@ -97,7 +97,7 @@ function App() {
   }, []);
 
   return (
-    <>
+    <div className="app-container">
       <h1 id="game-title">Dots and Boxes</h1>
 
       {
@@ -144,8 +144,12 @@ function App() {
         )
       }
       {userInfo && <UserInfoPanel {...userInfo} />}
-
-    </>
+      {/* <Confetti
+        width={width}
+        height={height}
+        gravity={0.5}
+      /> */}
+    </div>
   )
 }
 
