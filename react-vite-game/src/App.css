@@ -85,12 +85,12 @@ label {
 }
 
 .leaderboard table td {
-  background: rgba(255, 166, 0, 0.7);
+  background: rgba(255, 166, 0, 0.9);
   color: black;
 }
 
 .leaderboard table tr.isYou td {
-  background: orange;
+  background: rgba(5, 255, 5, 0.8);
   font-weight: bold;
 }
 

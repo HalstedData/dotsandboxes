@@ -7,7 +7,7 @@ const DOT_RADIUS = 7;
 const SCORE_AREA_HEIGHT = 100;
 // const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
 
-const WHITE = "#ffffff";
+const WHITE = "rgba(255,255,255,0.6)";
 const RED = "#ff0000";
 const BLUE = "#0000ff";
 const BLACK = "#000000";
@@ -138,7 +138,7 @@ export default function drawBoard(canvas: HTMLCanvasElement, clientGame: ClientG
   const context = canvas.getContext("2d");
   if (!context) throw "No context what?";
 
-  context.fillStyle = WHITE;
+  context.fillStyle = "rgba(255,255,255,0.8)";
   context.fillRect(0, 0, clientGame.meta.width, clientGame.meta.width + SCORE_AREA_HEIGHT);
   fillBoxes(context, clientGame);
   drawLines(context, clientGame);

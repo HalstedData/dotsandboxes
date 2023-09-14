@@ -3,7 +3,7 @@ import './App.css'
 import Game from './Game';
 import { Socket } from "socket.io-client";
 import { ClientGameV2, ClientToServerEvents, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
-import useAppStore from './store';
+import useAppStore from './store';``
 import Leaderboard from './Leaderboard';
 
 export type GameInProgress = Pick<ClientGameV2['meta'], 'gameID' | 'gridSize' | 'players'>;

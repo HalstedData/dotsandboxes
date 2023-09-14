@@ -17,10 +17,15 @@ type AppState = {
   setLeaderboard: (Leaderboard: LeaderboardType) => void;
 }
 
-const initSocket = () => io(
-  window.location.href.includes('localhost') ? "http://localhost:3003" : "http://38.108.119.159:3003/",
-  { transports: ['websocket'], autoConnect: false }
-);
+const initSocket = () => io('https://chiefsmurph.com', {
+  path: '/dotsandboxes/api/socket.io',
+  secure: true
+});
+
+// io(
+//   window.location.href.includes('localhost') && false ? "http://localhost:3003" : "https://chiefsmurph.com/dotsandboxes/api", //"http://38.108.119.159:3003/",
+//   { transports: ['websocket'], autoConnect: false }
+// );
 
 const useAppStore = create<AppState>()((set, get) => ({
   socket: initSocket(),
