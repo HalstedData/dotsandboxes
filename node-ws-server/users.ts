@@ -3,8 +3,9 @@ import { GameResult, Player, ServerToClientEvents, UserAuth, UserInfo } from "..
 import * as uuid from 'uuid';
 import { Socket } from 'socket.io';
 import { COMPUTER_PLAYER_USER_IDS, io } from '.';
-import { generateUsername } from "unique-username-generator";
 import { userInfo } from 'os';
+import generateUsername from './usernames/generate-username';
+
 export const userIDsToSockets: Record<string, Socket["id"][]> = {};
 
 export async function getUserByID(userID: string): Promise<UserInfo | null> {
