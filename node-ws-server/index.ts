@@ -13,7 +13,7 @@ const waitingRooms: Map<number, {
 
 export const io = new Server<ClientToServerEvents, ServerToClientEvents, any, UserInfo>({
   cors: {
-    origin: ["http://localhost:5173", 'https://react-vite-game-v2--dotsandboxes.repl.co'],
+    origin: ["http://localhost:5173", 'https://react-vite-game-v2--dotsandboxes.repl.co', 'http://38.108.119.159:5173'],
     methods: ["GET", "POST"]
   }
 });
