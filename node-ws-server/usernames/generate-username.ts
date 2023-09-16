@@ -1,5 +1,6 @@
 import colors from './data/colors';
 import animals from './data/animals';
+import { getAllUserIDs } from '../users';
 
 const createRandomUsername = () => {
     const randomColor = colors[Math.floor(Math.random() * colors.length)];
@@ -11,5 +12,7 @@ const createRandomUsername = () => {
 export default async function generateUsername() {
     const randomUsername = createRandomUsername();
     const allUserIDsTaken = await getAllUserIDs();
-    return allUserIDsTaken.includes(randomUsername) ? generateUsername() : randomUsername;
+    return allUserIDsTaken.includes(randomUsername)
+        ? generateUsername() 
+        : randomUsername;
 }
