@@ -45,7 +45,7 @@ export async function saveUserInfo(userInfo: UserInfo) {
 
 export async function createNewUser(partial?: Partial<UserInfo>): Promise<UserInfo> {
   const userInfo: UserInfo = {
-    userID: generateUsername(),
+    userID: await generateUsername(),
     authToken: uuid.v4(),
     score: 100,
     ...partial,

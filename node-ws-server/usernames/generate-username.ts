@@ -8,7 +8,7 @@ const createRandomUsername = () => {
     return `${randomColor}${randomAnimal}${randomTwoDigits}`.toLowerCase();
 };
 
-export default function generateUsername() {
+export default async function generateUsername() {
     const randomUsername = createRandomUsername();
     const allUserIDsTaken = await getAllUserIDs();
     return allUserIDsTaken.includes(randomUsername) ? generateUsername() : randomUsername;
