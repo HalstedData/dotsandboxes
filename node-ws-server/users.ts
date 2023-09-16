@@ -106,11 +106,15 @@ export async function updateUserAfterGame(userID: string, gameResult: GameResult
   emitToUsers([userID], 'user-info', newUserInfo);
 }
 
-export async function getAllUsers(): Promise<UserInfo[]> {
-  const allUserList = fs.readdirSync('./json/users')
+export async function getAllUserIDs(): Promise<string[]> {
+  return fs.readdirSync('./json/users')
     .filter(fileName => fileName.endsWith('.json'))
     .map(fileName => fileName.split('.json').shift()?.slice(5))
     .filter((fileName): fileName is string => !!fileName);
+}
+
+export async function getAllUsers(): Promise<UserInfo[]> {
+  const allUserList = await getAllUserIDs();
   console.log({ allUserList })
   const allUserInfos = await Promise.all(allUserList.map(userID => getUserByID(userID)));
   return allUserInfos.filter((userInfo): userInfo is UserInfo => !!userInfo);
