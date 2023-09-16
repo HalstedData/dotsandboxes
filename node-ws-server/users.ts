@@ -15,7 +15,7 @@ export async function getUserByID(userID: string): Promise<UserInfo | null> {
     console.error('user not found', userID);
     if (COMPUTER_PLAYER_USER_IDS.includes(userID)) {
       console.log('creating computer player');
-      return createNewUser({
+      return await createNewUser({
         userID
       });
     }
