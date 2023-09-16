@@ -3,7 +3,6 @@ import { GameResult, Player, ServerToClientEvents, UserAuth, UserInfo } from "..
 import * as uuid from 'uuid';
 import { Socket } from 'socket.io';
 import { COMPUTER_PLAYER_USER_IDS, io } from '.';
-import { userInfo } from 'os';
 import generateUsername from './usernames/generate-username';
 
 export const userIDsToSockets: Record<string, Socket["id"][]> = {};
@@ -14,6 +13,12 @@ export async function getUserByID(userID: string): Promise<UserInfo | null> {
     foundUser = fs.readFileSync(`./json/users/user-${userID}.json`, 'utf8');
   } catch (e) {
     console.error('user not found', userID);
+    if (COMPUTER_PLAYER_USER_IDS.includes(userID)) {
+      console.log('creating computer player');
+      await createNewUser({
+        userID
+      });
+    }
   } finally {
     return foundUser ? JSON.parse(foundUser) as UserInfo : null;
   }
