@@ -164,7 +164,7 @@ export async function playerHasDisconnected(userID: string, gameID?: string) {
   const { players } = gameInProgress.meta;
   gameID ??= gameInProgress.meta.gameID;
   const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
-  emitToPlayers(players, 'player-disconnected');
+  emitToPlayers(players.filter(player => player.userID !== userID), 'player-disconnected');
   const gameResults: GameResult[] = [];
   for (let player of players) {
     const isPlayerThatDisconnected = player.userID === userID;
