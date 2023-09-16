@@ -56,8 +56,12 @@ export async function handleGameOver(gameID: string) {
     const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
     const isWinner = winnerUserID === userID;
     const diff = avgScoreOtherUsers - beforeScore;
-    const changeAffectBySquarePerc = diff * squarePerc;
-    const scoreChange = isWinner ? Math.max(20, changeAffectBySquarePerc) : Math.min(-20, changeAffectBySquarePerc);
+
+    let changeAffectBySquarePerc = diff * squarePerc;
+    if (changeAffectBySquarePerc < 0) {
+      changeAffectBySquarePerc *= 0.6;
+    }
+    const scoreChange = isWinner ? Math.max(18, changeAffectBySquarePerc) : Math.min(-12, changeAffectBySquarePerc);
     const newScore = Math.round(beforeScore + scoreChange);
     const gameResult = [beforeScore, isWinner ? 'W' : 'L', newScore, gameID, ...otherUsers.map(player => player.userID)] as GameResult;
     return {
@@ -181,8 +185,8 @@ export async function playerHasDisconnected(userID: string, gameID?: string) {
       .filter(comparePlayer => comparePlayer.userID !== player.userID)
       .map(player => player.userID);
     const scoreChange = isPlayerThatDisconnected
-      ? (squaresCompleted ? -30 : 0)
-      : 30;
+      ? (squaresCompleted ? -20 : 0)
+      : 20;
     const gameResult: GameResult = [
       player.score,
       isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
