@@ -37,7 +37,7 @@ const checkTimeouts: Map<number, NodeJS.Timeout | null> = new Map();
 
 export const COMPUTER_PLAYER_USER_IDS = [
   'pinkmonkey23',
-  'insensitivecovering',
+  'rubydog31',
 ];
 
 async function cueComputerGameForWaitingPlayer(gridSize: number) {
@@ -49,7 +49,7 @@ async function cueComputerGameForWaitingPlayer(gridSize: number) {
 
   const playerUserIDs = [
     ...waitingUserIDs,
-    COMPUTER_PLAYER_USER_IDS[0]
+    COMPUTER_PLAYER_USER_IDS[Math.round(Math.random())]
   ];
 
   const playerUserInfos = (await Promise.all(
