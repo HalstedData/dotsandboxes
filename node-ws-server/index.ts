@@ -186,6 +186,10 @@ io.on('connection', socket => {
     const { userID } = socket.data;
     receiveLineFromUserID(line, userID, gameID);
   });
+  socket.on('player-dropped', (gameID) => {
+    const { userID } = socket.data;
+    playerHasDisconnected(userID, gameID);
+  });
   socket.on('disconnect', () => {
     const { userID } = socket.data;
     playerHasDisconnected(userID);

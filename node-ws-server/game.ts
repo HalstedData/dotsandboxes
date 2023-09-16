@@ -151,11 +151,19 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
   }
 }
 
-export async function playerHasDisconnected(userID: string) {
+// export async function playerHasDropped(userID:string, gameID: string) {
+//   const gameInProgress = Object.values(gamesInProgress)
+//     .find(game => game.meta.gameID === gameID);
+
+// }
+
+export async function playerHasDisconnected(userID: string, gameID?: string) {
   const gameInProgress = Object.values(gamesInProgress)
-    .find(game => game.meta.players.some(player => player.userID === userID));
+    .find(game => (!gameID || game.meta.gameID === gameID) && game.meta.players.some(player => player.userID === userID));
   if (!gameInProgress) return;
-  const { players, gameID } = gameInProgress.meta;
+  const { players } = gameInProgress.meta;
+  gameID ??= gameInProgress.meta.gameID;
+  const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
   emitToPlayers(players, 'player-disconnected');
   const gameResults: GameResult[] = [];
   for (let player of players) {
@@ -163,10 +171,13 @@ export async function playerHasDisconnected(userID: string) {
     const opponentUserIDs = players
       .filter(comparePlayer => comparePlayer.userID !== player.userID)
       .map(player => player.userID);
+    const scoreChange = isPlayerThatDisconnected
+      ? (squaresCompleted ? -30 : 0)
+      : 30;
     const gameResult: GameResult = [
       player.score,
       isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
-      player.score + (isPlayerThatDisconnected ? -30 : 30),
+      player.score + scoreChange,
       gameID,
       ...opponentUserIDs,
     ];

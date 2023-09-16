@@ -128,6 +128,13 @@ function Game(props: GameProps) {
     return () => { socket.off('receive-line', receiveLineHandler); }
   }, [receiveLineHandler]);
 
+  useEffect(() => {
+    return () => {
+      console.log('player dropped');
+      socket.emit('player-dropped', gameID);
+    };
+  }, []);
+
   return (
     <div id="game-section">
       <Textfit

@@ -28,6 +28,7 @@ export type GameRequestResponse = GameOnResponse | 'waiting';
 export type ClientToServerEvents = {
   "game-request": (gridSize: number, cb: (response: GameRequestResponse) => void) => void;
   "send-line": (line: Line, gameID: string) => void;
+  "player-dropped": (gameID: string) => void;
 }
 export type ServerToClientEvents = {
   "game-on": (response: GameOnResponse) => void;
