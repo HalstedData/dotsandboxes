@@ -72,14 +72,18 @@ export async function handleGameOver(gameID: string) {
   await handleGameResults(allResults.map(({ gameResult }) => gameResult));
 
   const startNewGameWithSameSettings = (gameID: string) => {
+    const game = gamesInProgress[gameID];
     if (!game) {
       return console.error('no game found');
     }
+    const { players } = game.meta;
     delete gamesInProgress[gameID];
-    const newPlayers = allResults.map(player => ({
-      userID: player.userID,
-      score: player.gameResult[2]
-    }));
+    const newPlayers = allResults
+      .filter(player => players.some(p => p.userID === player.userID))
+      .map(player => ({
+        userID: player.userID,
+        score: player.gameResult[2]
+      }));
     const newGameID = newGame({
       gridSize,
       players: newPlayers,
@@ -159,7 +163,11 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
 
 export async function playerHasDisconnected(userID: string, gameID?: string) {
   const gameInProgress = Object.values(gamesInProgress)
-    .find(game => (!gameID || game.meta.gameID === gameID) && game.meta.players.some(player => player.userID === userID));
+    .find(game => {
+      const matchesGameIDFilter = (!gameID || game.meta.gameID === gameID);
+      const includesCurrentUser = game.meta.players.some(player => player.userID === userID);
+      return matchesGameIDFilter && includesCurrentUser;
+    });
   if (!gameInProgress) return;
   const { players } = gameInProgress.meta;
   gameID ??= gameInProgress.meta.gameID;

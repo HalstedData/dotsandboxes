@@ -130,6 +130,7 @@ function Game(props: GameProps) {
 
   useEffect(() => {
     return () => {
+      debugger;
       console.log('player dropped');
       socket.emit('player-dropped', gameID);
     };

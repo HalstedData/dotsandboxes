@@ -4,7 +4,8 @@ import App from './App.tsx'
 import './index.css'
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
-  <React.StrictMode>
+  // <React.StrictMode>
+  <>
     <App />
     <div className="floatingbg"/>
     <div className="floatingbg"/>
@@ -16,5 +17,5 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
-  </React.StrictMode>,
+  </>,
 )
