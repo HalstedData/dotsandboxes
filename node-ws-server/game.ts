@@ -150,7 +150,7 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
   );
 
   if (!nextGame.state.isGameOver && COMPUTER_PLAYER_USER_IDS.includes(nextGame.state.currentPlayer)) {
-    const waitSeconds = nextGame.state.currentPlayer === 'pinkmonkey23' ? 0.5 : Math.random() * 4;
+    const waitSeconds = nextGame.state.currentPlayer === 'pinkmonkey23' ? 0.5 : Math.random() * 2;
     setTimeout(async () => {
       console.log('getting computer move');
       const computerMove = await getComputerMove(nextGame);
