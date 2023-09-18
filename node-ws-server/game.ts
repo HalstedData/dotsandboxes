@@ -169,41 +169,45 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
 // }
 
 export async function playerHasDisconnected(userID: string, gameID?: string) {
-  const gameInProgress = Object.values(gamesInProgress)
-    .find(game => {
+  const matchingGames = Object.values(gamesInProgress)
+    .filter(game => {
       const matchesGameIDFilter = (!gameID || game.meta.gameID === gameID);
       const includesCurrentUser = game.meta.players.some(player => player.userID === userID);
       return matchesGameIDFilter && includesCurrentUser;
     });
-  if (!gameInProgress || gameInProgress.state.isGameOver) return;
-  const { players } = gameInProgress.meta;
-  gameID ??= gameInProgress.meta.gameID;
-  const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
-  emitToPlayers(players.filter(player => player.userID !== userID), 'player-disconnected');
-  const gameResults: GameResult[] = [];
-  for (let player of players) {
-    const isPlayerThatDisconnected = player.userID === userID;
-    const opponentUserIDs = players
-      .filter(comparePlayer => comparePlayer.userID !== player.userID)
-      .map(player => player.userID);
-    const scoreChange = isPlayerThatDisconnected
-      ? (squaresCompleted ? -20 : 0)
-      : squaresCompleted ? 10 : 0;
-    const gameResult: GameResult = [
-      player.score,
-      isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
-      player.score + scoreChange,
-      gameID,
-      ...opponentUserIDs,
-    ];
-    await updateUserAfterGame(
-      player.userID,
-      gameResult,
-      isPlayerThatDisconnected
-    );
-    gameResults.push(gameResult);
-  }
-  await handleGameResults(gameResults);
+  for (let gameInProgress of matchingGames) {
+    const { players, gameID: matchingGameID } = gameInProgress.meta;
+    const { isGameOver } = gameInProgress.state;
+    emitToPlayers(players.filter(player => player.userID !== userID), 'player-disconnected');
+    if (!isGameOver) {
+      const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
+      const gameResults: GameResult[] = [];
+      for (let player of players) {
+        const isPlayerThatDisconnected = player.userID === userID;
+        const opponentUserIDs = players
+          .filter(comparePlayer => comparePlayer.userID !== player.userID)
+          .map(player => player.userID);
+        const scoreChange = isPlayerThatDisconnected
+          ? (squaresCompleted ? -20 : 0)
+          : squaresCompleted ? 10 : 0;
+        const gameResult: GameResult = [
+          player.score,
+          isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
+          player.score + scoreChange,
+          matchingGameID,
+          ...opponentUserIDs,
+        ];
+        await updateUserAfterGame(
+          player.userID,
+          gameResult,
+          isPlayerThatDisconnected
+        );
+        gameResults.push(gameResult);
+      }
+      await handleGameResults(gameResults);
+    }
+    delete gamesInProgress[matchingGameID];
+  };
 
-  delete gamesInProgress[gameInProgress.meta.gameID];
+
 }
