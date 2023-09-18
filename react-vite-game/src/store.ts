@@ -17,10 +17,16 @@ type AppState = {
   setLeaderboard: (Leaderboard: LeaderboardType) => void;
 }
 
-const initSocket = () => io('https://chiefsmurph.com', {
-  path: '/dotsandboxes/api/socket.io',
-  secure: true
-});
+const initSocket = () => 
+  window.location.href.includes('localhost') && true
+    ? io(
+         "http://localhost:3003",
+        { transports: ['websocket'], autoConnect: false }
+      )
+    : io('https://chiefsmurph.com', {
+      path: '/dotsandboxes/api/socket.io',
+      secure: true
+    });
 
 // io(
 //   window.location.href.includes('localhost') && false ? "http://localhost:3003" : "https://chiefsmurph.com/dotsandboxes/api", //"http://38.108.119.159:3003/",

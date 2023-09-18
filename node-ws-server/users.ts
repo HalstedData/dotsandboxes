@@ -15,13 +15,14 @@ export async function getUserByID(userID: string): Promise<UserInfo | null> {
     console.error('user not found', userID);
     if (COMPUTER_PLAYER_USER_IDS.includes(userID)) {
       console.log('creating computer player');
-      return await createNewUser({
+      const newUser = await createNewUser({
         userID
       });
+      console.log('created', newUser)
+      return newUser;
     }
-  } finally {
-    return foundUser ? JSON.parse(foundUser) as UserInfo : null;
   }
+  return foundUser ? JSON.parse(foundUser) as UserInfo : null;
 }
 
 export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | null> {

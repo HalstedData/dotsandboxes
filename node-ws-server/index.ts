@@ -53,8 +53,9 @@ async function cueComputerGameForWaitingPlayer(gridSize: number) {
   ];
 
   const playerUserInfos = (await Promise.all(
-    playerUserIDs.map(async userID => await getUserByID(userID))
+    playerUserIDs.map(getUserByID)
   )).filter((player): player is UserInfo => !!player);
+  // console.log({playerUserInfos})
   const players = playerUserInfos.map(userInfo => ({
     userID: userInfo.userID,
     score: userInfo.score,

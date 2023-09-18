@@ -25,6 +25,7 @@ function App() {
     gridSize,
     players
   }: Exclude<GameRequestResponse, string>) => {
+    console.log('game-on', {gameID, gridSize, players})
     newGame({
       gameID,
       gridSize,

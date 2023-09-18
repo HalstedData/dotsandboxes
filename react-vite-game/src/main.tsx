@@ -10,10 +10,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <div className="floatingbg"/>
     {/* <div className="floatingbg"/>
     <div className="floatingbg"/>
-    <div className="floatingbg"/> */}
+    <div className="floatingbg"/>
 
 
-    {/* <div className="floatingbgsecond"/>
+    <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/> */}

@@ -31,12 +31,13 @@ export async function updateLeaderboard(): Promise<LeaderboardType> {
 };
 
 export async function handleGameResults(gameResults: GameResult[]) {
-  if (leaderboard === null) return;
-  const l = leaderboard;
+  if (leaderboard === null || !leaderboard.entries.length) {
+    return updateLeaderboard();
+  }
   const highestScore = Math.max(
     ...gameResults.map(gameResult => [gameResult[0], gameResult[2]]).flat()
   );
-  const lowestScoreOnLeaderboardCurrently = l.entries[l.entries.length - 1].score;
+  const lowestScoreOnLeaderboardCurrently = leaderboard.entries[leaderboard.entries.length - 1].score;
   const needsUpdating = highestScore >= lowestScoreOnLeaderboardCurrently;
   // console.log({ highestScore, lowestScoreOnLeaderboardCurrently, needsUpdating })
   if (needsUpdating) {
