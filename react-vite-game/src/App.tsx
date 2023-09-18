@@ -53,7 +53,10 @@ function App() {
     socket.emit('game-request', gridSize, response => {
       console.log('game request response', response);
       if (response === 'waiting') {
-        setSocketStatus('connecting to opponent...');
+        setSocketStatus('waiting for opponent...');
+        setTimeout(() => {
+          setSocketStatus('connecting to opponent...');
+        }, 300 + (Math.random() * 3000));
       } else {
         handleGameOnResponse(response);
       }
