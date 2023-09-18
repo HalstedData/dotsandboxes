@@ -5,6 +5,8 @@ import { Socket } from "socket.io-client";
 import { ClientGameV2, ClientToServerEvents, GameRequestResponse, ServerToClientEvents, UserAuth, UserInfo } from '../../commonts/types';
 import useAppStore from './store';``
 import Leaderboard from './Leaderboard';
+import Odometer from 'react-odometerjs';
+import 'odometer/themes/odometer-theme-default.css';
 
 export type GameInProgress = Pick<ClientGameV2['meta'], 'gameID' | 'gridSize' | 'players'>;
 
@@ -159,7 +161,7 @@ function UserInfoPanel({ userID, score }: UserInfo) {
     <div>
       <pre>
         your userID: {userID}<br />
-        your score: {score}
+        your score: <Odometer value={score} format="(.ddd),dd" />
       </pre>
     </div>
   )
