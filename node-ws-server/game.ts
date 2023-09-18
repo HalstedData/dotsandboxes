@@ -175,7 +175,7 @@ export async function playerHasDisconnected(userID: string, gameID?: string) {
       const includesCurrentUser = game.meta.players.some(player => player.userID === userID);
       return matchesGameIDFilter && includesCurrentUser;
     });
-  if (!gameInProgress) return;
+  if (!gameInProgress || gameInProgress.state.isGameOver) return;
   const { players } = gameInProgress.meta;
   gameID ??= gameInProgress.meta.gameID;
   const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
