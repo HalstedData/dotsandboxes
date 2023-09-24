@@ -1,9 +1,12 @@
+@import url('https://fonts.googleapis.com/css?family=Skranji');
+
+
 #root,
 body {
   margin: 0 auto;
   padding: 0;
   text-align: center;
-  font-family: ui-monospace;
+  font-family: 'Skranji', ui-monospace;
   background: rgb(0,0,0,0.7);
   /* background-image: url('https://www.transparenttextures.com/patterns/3px-tile.png'); */
   color: #FFF;
@@ -12,6 +15,9 @@ body {
 }
 
 
+* {
+  font-family: 'Skranji', ui-monospace;
+}
 
 
 

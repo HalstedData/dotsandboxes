@@ -1,8 +1,4 @@
 
-pre {
-  font-family: ui-monospace;
-}
-
 h1#game-title {
   padding-top: 10px;
   margin: 0;
@@ -68,19 +64,59 @@ label {
   box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
 }
 
+.leaderboard h3 {
+  font-size: 36px;
+  font-variant: all-small-caps;
+}
+
 .leaderboard table {
   margin: auto;
   font-size: 150%;
 }
 
-.leaderboard table td {
+.leaderboard table * {
+  font-family: system-ui;
+
+}
+
+.leaderboard thead {
+  font-size: 20px;
+}
+
+.leaderboard tbody {
   background: rgba(255, 166, 0, 0.9);
+}
+
+.leaderboard thead th:first-of-type {
+  text-align: left;
+}
+
+.leaderboard tbody td:first-of-type {
+  text-align: left;
+}
+
+.leaderboard table td {
   color: black;
+  /* border-radius: 13px 0 0 13px; */
+  padding: 2px 14px;
+}
+
+.leaderboard table td:last-of-type {
+  border-radius: 0;
 }
 
 .leaderboard table tr.isYou td {
   background: rgba(5, 255, 5, 0.8);
   font-weight: bold;
+}
+
+.leaderboard i {
+  font-size: 16px;
+  font-family: ui-monospace;
+}
+
+pre {
+  font-family: ui-monospace;
 }
 
 
@@ -103,6 +139,9 @@ label {
 .panel button {
   font-size: 108%;
 }
+/* .panel button:hover {
+  background-color: blue;
+} */
 
 #options {
   display: flex;

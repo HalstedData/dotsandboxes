@@ -16,7 +16,6 @@ export default function Leaderboard(props: LeaderboardProps) {
   return (
     <div className="leaderboard">
       <h3>Leaderboard</h3>
-      <i>last updated: {(new Date(leaderboard.lastUpdated)).toLocaleString()}</i><br />
       <table>
         <thead>
           <th>userID</th>
@@ -35,6 +34,7 @@ export default function Leaderboard(props: LeaderboardProps) {
           }
         </tbody>
       </table>
+      <i>last updated: {(new Date(leaderboard.lastUpdated)).toLocaleString()}</i>
     </div>
   )
 }
