@@ -77,7 +77,7 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
   };
 
   const [minType, lineI, lineJ] = line;
-  const curPlayerIndex = players.findIndex(player => player.userID === currentPlayer);
+  const curPlayerIndex = players.findIndex(player => player.username === currentPlayer);
   if (minType === "h") {
     hlines[lineI][lineJ] = currentPlayer;
     gameStateUpdates.hlines = hlines;
@@ -103,18 +103,18 @@ export function applyLine<T extends GameV2>(line: Line, game: T): T {
       return true;
     })();
     if (isGameOver) {
-      console.log('isGaveOver detected winnerUserID', currentPlayer);
+      console.log('isGaveOver detected winnerUsername', currentPlayer);
       gameStateUpdates.isGameOver = true;
-      gameMetaUpdates.winnerUserID = Object.entries(squareCounts)
-        .map(([userID, squareCount]) => ({
-          userID,
+      gameMetaUpdates.winnerUsername = Object.entries(squareCounts)
+        .map(([username, squareCount]) => ({
+          username,
           squareCount
         }))
         .sort((a, b) => b.squareCount - a.squareCount)
-        .shift()?.userID;
+        .shift()?.username;
     }
   } else {
-    gameStateUpdates.currentPlayer = (players[curPlayerIndex === players.length - 1 ? 0 : curPlayerIndex + 1]).userID;
+    gameStateUpdates.currentPlayer = (players[curPlayerIndex === players.length - 1 ? 0 : curPlayerIndex + 1]).username;
   }
 
   return {

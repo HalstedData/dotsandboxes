@@ -5,18 +5,18 @@ import { Socket } from 'socket.io';
 import { COMPUTER_PLAYER_USER_IDS, io } from '.';
 import generateUsername from './usernames/generate-username';
 
-export const userIDsToSockets: Record<string, Socket["id"][]> = {};
+export const usernamesToSockets: Record<string, Socket["id"][]> = {};
 
-export async function getUserByID(userID: string): Promise<UserInfo | null> {
+export async function getUserByID(username: string): Promise<UserInfo | null> {
   let foundUser: string | undefined;
   try {
-    foundUser = fs.readFileSync(`./json/users/user-${userID}.json`, 'utf8');
+    foundUser = fs.readFileSync(`./json/users/user-${username}.json`, 'utf8');
   } catch (e) {
-    console.error('user not found', userID);
-    if (COMPUTER_PLAYER_USER_IDS.includes(userID)) {
+    console.error('user not found', username);
+    if (COMPUTER_PLAYER_USER_IDS.includes(username)) {
       console.log('creating computer player');
       const newUser = await createNewUser({
-        userID
+        username
       });
       console.log('created', newUser)
       return newUser;
@@ -27,26 +27,26 @@ export async function getUserByID(userID: string): Promise<UserInfo | null> {
 
 export async function validateUserAuth(userAuth: UserAuth): Promise<UserInfo | null> {
   console.log(`validating ${JSON.stringify(userAuth)}`);
-  let foundUser = await getUserByID(userAuth.userID);
+  let foundUser = await getUserByID(userAuth.username);
   if (!foundUser) {
-    console.error(`user not found for ${userAuth.userID}`);
+    console.error(`user not found for ${userAuth.username}`);
     return null;
   }
   if (foundUser.authToken !== userAuth.authToken) {
-    console.error(`invalid authToken for ${userAuth.userID}.... found ${foundUser.authToken} ... supplied ... ${userAuth.authToken}`)
+    console.error(`invalid authToken for ${userAuth.username}.... found ${foundUser.authToken} ... supplied ... ${userAuth.authToken}`)
     return null;
   }
-  console.log(`SUCCESS validate for ${foundUser.userID}`);
+  console.log(`SUCCESS validate for ${foundUser.username}`);
   return foundUser;
 }
 
 export async function saveUserInfo(userInfo: UserInfo) {
-  fs.writeFileSync(`./json/users/user-${userInfo.userID}.json`, JSON.stringify(userInfo, null, 2), 'utf8');
+  fs.writeFileSync(`./json/users/user-${userInfo.username}.json`, JSON.stringify(userInfo, null, 2), 'utf8');
 }
 
 export async function createNewUser(partial?: Partial<UserInfo>): Promise<UserInfo> {
   const userInfo: UserInfo = {
-    userID: await generateUsername(),
+    username: await generateUsername(),
     authToken: uuid.v4(),
     score: 100,
     ...partial,
@@ -56,25 +56,25 @@ export async function createNewUser(partial?: Partial<UserInfo>): Promise<UserIn
 }
 
 export function emitToUsers<Event extends keyof ServerToClientEvents>(
-  userIDs: string[],
+  usernames: string[],
   event: Event,
   ...args: Parameters<ServerToClientEvents[Event]>
 ) {
-  const matchingSockets = userIDs
-    .map(playerUserID => {
-      const playerSocketIDs = userIDsToSockets[playerUserID] || [];
+  const matchingSockets = usernames
+    .map(playerUsername => {
+      const playerSocketIDs = usernamesToSockets[playerUsername] || [];
       return {
-        playerUserID,
+        playerUsername,
         playerSocketIDs,
         playerSockets: playerSocketIDs
           .map(socketId => io.sockets.sockets.get(socketId))
           .filter(Boolean)
       }
     });
-  matchingSockets.forEach(({ playerUserID, playerSocketIDs, playerSockets }) => {
+  matchingSockets.forEach(({ playerUsername, playerSocketIDs, playerSockets }) => {
     if (!playerSocketIDs.length || !playerSockets.length) {
-      if (!COMPUTER_PLAYER_USER_IDS.includes(playerUserID)) {
-        return console.log(`no sockets found for playerUserID: ${playerUserID}`);
+      if (!COMPUTER_PLAYER_USER_IDS.includes(playerUsername)) {
+        return console.log(`no sockets found for playerUsername: ${playerUsername}`);
       }
     };
     playerSockets.forEach(playerSocket => playerSocket?.emit(event, ...args));
@@ -86,13 +86,13 @@ export function emitToPlayers<Event extends keyof ServerToClientEvents>(
   event: Event,
   ...args: Parameters<ServerToClientEvents[Event]>
 ) {
-  return emitToUsers(players.map(player => player.userID), event, ...args);
+  return emitToUsers(players.map(player => player.username), event, ...args);
 }
 
 
-export async function updateUserAfterGame(userID: string, gameResult: GameResult, skipAuthChange?: boolean) {
-  console.log(`updating score for ${userID}`);
-  const userInfo = await getUserByID(userID);
+export async function updateUserAfterGame(username: string, gameResult: GameResult, skipAuthChange?: boolean) {
+  console.log(`updating score for ${username}`);
+  const userInfo = await getUserByID(username);
   if (!userInfo) {
     return;
   }
@@ -104,10 +104,10 @@ export async function updateUserAfterGame(userID: string, gameResult: GameResult
   };
   console.log(`saving score update: before ${userInfo.score} after ${newUserInfo.score}`);
   await saveUserInfo(newUserInfo);
-  emitToUsers([userID], 'user-info', newUserInfo);
+  emitToUsers([username], 'user-info', newUserInfo);
 }
 
-export async function getAllUserIDs(): Promise<string[]> {
+export async function getAllUsernames(): Promise<string[]> {
   return fs.readdirSync('./json/users')
     .filter(fileName => fileName.endsWith('.json'))
     .map(fileName => fileName.split('.json').shift()?.slice(5))
@@ -115,8 +115,8 @@ export async function getAllUserIDs(): Promise<string[]> {
 }
 
 export async function getAllUsers(): Promise<UserInfo[]> {
-  const allUserList = await getAllUserIDs();
+  const allUserList = await getAllUsernames();
   console.log({ allUserList })
-  const allUserInfos = await Promise.all(allUserList.map(userID => getUserByID(userID)));
+  const allUserInfos = await Promise.all(allUserList.map(username => getUserByID(username)));
   return allUserInfos.filter((userInfo): userInfo is UserInfo => !!userInfo);
 }

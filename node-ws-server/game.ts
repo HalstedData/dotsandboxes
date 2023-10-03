@@ -24,7 +24,7 @@ export function newGame(params: NewGameParams) {
       hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
       vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
       squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-      currentPlayer: players[0].userID,
+      currentPlayer: players[0].username,
       isGameOver: false,
     }
   };
@@ -35,26 +35,26 @@ export function newGame(params: NewGameParams) {
 
 export async function handleGameOver(gameID: string) {
   const game = gamesInProgress[gameID];
-  const { gridSize, players, winnerUserID } = game.meta;
+  const { gridSize, players, winnerUsername } = game.meta;
   const { isGameOver, squares } = game.state;
-  if (!isGameOver || !winnerUserID) {
-    return console.error('handling game over but !isGameOver || !winnerUserID')
+  if (!isGameOver || !winnerUsername) {
+    return console.error('handling game over but !isGameOver || !winnerUsername')
   }
   fs.writeFileSync(`./json/games/game-${gameID}.json`, JSON.stringify(game.meta, null, 2));
 
   // update user scores
   const allResults: Array<{
-    userID: string;
+    username: string;
     gameResult: GameResult
   }> = players.map(player => {
-    const { userID, score: beforeScore } = player;
-    const squarePerc = squares.flat().filter(square => square === player.userID).length / squares.flat().length;
+    const { username, score: beforeScore } = player;
+    const squarePerc = squares.flat().filter(square => square === player.username).length / squares.flat().length;
     const otherUsers = players
-      .filter(({ userID: otherUserID, }) => otherUserID !== userID);
+      .filter(({ username: otherUsername, }) => otherUsername !== username);
     const otherUsersScores = otherUsers
       .map(({ score: otherUserScore }) => otherUserScore);
     const avgScoreOtherUsers = otherUsersScores.reduce((acc, score) => acc + score, 0) / otherUsersScores.length;
-    const isWinner = winnerUserID === userID;
+    const isWinner = winnerUsername === username;
     const diff = avgScoreOtherUsers - beforeScore;
 
     let changeAffectBySquarePerc = diff * squarePerc;
@@ -63,14 +63,14 @@ export async function handleGameOver(gameID: string) {
     }
     const scoreChange = isWinner ? Math.max(18, changeAffectBySquarePerc) : Math.min(-12, changeAffectBySquarePerc);
     const newScore = Math.round(beforeScore + scoreChange);
-    const gameResult = [beforeScore, isWinner ? 'W' : 'L', newScore, gameID, ...otherUsers.map(player => player.userID)] as GameResult;
+    const gameResult = [beforeScore, isWinner ? 'W' : 'L', newScore, gameID, ...otherUsers.map(player => player.username)] as GameResult;
     return {
-      userID,
+      username,
       gameResult,
     };
   });
-  for (let { userID, gameResult } of allResults) {
-    await updateUserAfterGame(userID, gameResult);
+  for (let { username, gameResult } of allResults) {
+    await updateUserAfterGame(username, gameResult);
   }
 
   await handleGameResults(allResults.map(({ gameResult }) => gameResult));
@@ -83,9 +83,9 @@ export async function handleGameOver(gameID: string) {
     const { players } = game.meta;
     delete gamesInProgress[gameID];
     const newPlayers = allResults
-      .filter(player => players.some(p => p.userID === player.userID))
+      .filter(player => players.some(p => p.username === player.username))
       .map(player => ({
-        userID: player.userID,
+        username: player.username,
         score: player.gameResult[2]
       }));
     const newGameID = newGame({
@@ -101,7 +101,7 @@ export async function handleGameOver(gameID: string) {
   setTimeout(() => startNewGameWithSameSettings(gameID), 8000);
 }
 
-export async function receiveLineFromUserID(line: Line, userID: string, gameID: string) {
+export async function receiveLineFromUsername(line: Line, username: string, gameID: string) {
 
   // amount of times called 50x / 1 min ?
   // more than once in a half a second
@@ -115,8 +115,8 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
 
   // validate this is their turn
 
-  if (gameInProgress.state.currentPlayer !== userID) {
-    return console.error(`This person tried to make a move when it wasn't their turn: ${userID}`);
+  if (gameInProgress.state.currentPlayer !== username) {
+    return console.error(`This person tried to make a move when it wasn't their turn: ${username}`);
   }
 
   const nextGame = applyLine(line, gameInProgress);
@@ -144,8 +144,8 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
 
   emitToUsers(
     players
-      .map(player => player.userID)
-      .filter(playerUserId => playerUserId !== userID),
+      .map(player => player.username)
+      .filter(playerUserId => playerUserId !== username),
     'receive-line', line, gameID
   );
 
@@ -157,36 +157,36 @@ export async function receiveLineFromUserID(line: Line, userID: string, gameID: 
       console.log('getting computer move');
       const computerMove = await getComputerMove(nextGame);
       console.log('got computer move', computerMove);
-      receiveLineFromUserID(computerMove, nextGame.state.currentPlayer, nextGame.meta.gameID);
+      receiveLineFromUsername(computerMove, nextGame.state.currentPlayer, nextGame.meta.gameID);
     }, 1000 * waitSeconds);
   }
 }
 
-// export async function playerHasDropped(userID:string, gameID: string) {
+// export async function playerHasDropped(username:string, gameID: string) {
 //   const gameInProgress = Object.values(gamesInProgress)
 //     .find(game => game.meta.gameID === gameID);
 
 // }
 
-export async function playerHasDisconnected(userID: string, gameID?: string) {
+export async function playerHasDisconnected(username: string, gameID?: string) {
   const matchingGames = Object.values(gamesInProgress)
     .filter(game => {
       const matchesGameIDFilter = (!gameID || game.meta.gameID === gameID);
-      const includesCurrentUser = game.meta.players.some(player => player.userID === userID);
+      const includesCurrentUser = game.meta.players.some(player => player.username === username);
       return matchesGameIDFilter && includesCurrentUser;
     });
   for (let gameInProgress of matchingGames) {
     const { players, gameID: matchingGameID } = gameInProgress.meta;
     const { isGameOver } = gameInProgress.state;
-    emitToPlayers(players.filter(player => player.userID !== userID), 'player-disconnected');
+    emitToPlayers(players.filter(player => player.username !== username), 'player-disconnected');
     if (!isGameOver) {
       const squaresCompleted = gameInProgress.state.squares.flat().filter(Boolean).length;
       const gameResults: GameResult[] = [];
       for (let player of players) {
-        const isPlayerThatDisconnected = player.userID === userID;
-        const opponentUserIDs = players
-          .filter(comparePlayer => comparePlayer.userID !== player.userID)
-          .map(player => player.userID);
+        const isPlayerThatDisconnected = player.username === username;
+        const opponentUsernames = players
+          .filter(comparePlayer => comparePlayer.username !== player.username)
+          .map(player => player.username);
         const scoreChange = isPlayerThatDisconnected
           ? (squaresCompleted ? -20 : 0)
           : squaresCompleted ? 10 : 0;
@@ -195,10 +195,10 @@ export async function playerHasDisconnected(userID: string, gameID?: string) {
           isPlayerThatDisconnected ? 'DROPPED' : 'OPP-DROPPED',
           player.score + scoreChange,
           matchingGameID,
-          ...opponentUserIDs,
+          ...opponentUsernames,
         ];
         await updateUserAfterGame(
-          player.userID,
+          player.username,
           gameResult,
           isPlayerThatDisconnected
         );

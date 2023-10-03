@@ -70,7 +70,7 @@ function App() {
     if (userInfo) {
       const parsed = JSON.parse(userInfo) as UserInfo;
       const userAuth: UserAuth = {
-        userID: parsed.userID,
+        username: parsed.username,
         authToken: parsed.authToken
       };
       console.log('sending userAuth', userAuth)
@@ -159,11 +159,11 @@ function App() {
   )
 }
 
-function UserInfoPanel({ userID, score }: UserInfo) {
+function UserInfoPanel({ username, score }: UserInfo) {
   return (
     <div>
       <pre>
-        your userID: {userID}<br />
+        your username: {username}<br />
         your score: <Odometer value={score} format="(.ddd),dd" />
       </pre>
     </div>

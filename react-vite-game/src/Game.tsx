@@ -32,19 +32,19 @@ function Game(props: GameProps) {
       gameID,
       width: Math.min(600, width),
       moveOrder: [],
-      myPlayerId: userInfo.userID,
+      myPlayerId: userInfo.username,
     },
     state: {
       hlines: Array.from({ length: gridSize + 1 }, () => Array.from({ length: gridSize }, () => null)),
       vlines: Array.from({ length: gridSize }, () => Array.from({ length: gridSize + 1 }, () => null)),
       squares: Array.from({ length: gridSize }, () => Array.from({ length: gridSize }, () => null)),
-      currentPlayer: players[0].userID,
+      currentPlayer: players[0].username,
       isGameOver: false,
     },
   });
 
   const { meta, state } = clientGame;
-  const showingConfetti = meta.winnerUserID === meta.myPlayerId;
+  const showingConfetti = meta.winnerUsername === meta.myPlayerId;
   const isMoveMove = state.currentPlayer === meta.myPlayerId;
 
   useEffect(() => {
@@ -57,7 +57,7 @@ function Game(props: GameProps) {
     console.log('sizing canvas')
     const canvasEl = canvasRef.current;
     if (!canvasEl) return;
-    const canvasWidth = Math.min(600, width - 40);
+    const canvasWidth = Math.min(600, width - 80);
     canvasEl.width = canvasWidth;
     canvasEl.height = canvasWidth + SCORE_AREA_HEIGHT;
 

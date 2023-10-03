@@ -1,18 +1,22 @@
 import colors from './data/colors';
 import animals from './data/animals';
-import { getAllUserIDs } from '../users';
+import { getAllUsernames } from '../users';
 
 const createRandomUsername = () => {
-    const randomColor = colors[Math.floor(Math.random() * colors.length)];
-    const randomAnimal = animals[Math.floor(Math.random() * animals.length)];
+    const getRandomElementUnderFiveChars = (collection: Array<string>) => {
+        const underFive = collection.filter(item => item.length <= 5);
+        return underFive[Math.floor(Math.random() * underFive.length)];
+    }
+    const randomColor = getRandomElementUnderFiveChars(colors);
+    const randomAnimal = getRandomElementUnderFiveChars(animals)
     const randomTwoDigits = 10 + Math.floor(Math.random() * 90);
     return `${randomColor}${randomAnimal}${randomTwoDigits}`.toLowerCase();
 };
 
-export default async function generateUsername() {
+export default async function generateUsername(): Promise<string> {
     const randomUsername = createRandomUsername();
-    const allUserIDsTaken = await getAllUserIDs();
-    return allUserIDsTaken.includes(randomUsername)
-        ? generateUsername() 
+    const allUsernamesTaken = await getAllUsernames();
+    return allUsernamesTaken.includes(randomUsername)
+        ? generateUsername()
         : randomUsername;
 }

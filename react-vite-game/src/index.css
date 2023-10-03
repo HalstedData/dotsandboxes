@@ -12,6 +12,7 @@ body {
   color: #FFF;
   font-size: 110%;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 
 

@@ -2,6 +2,7 @@
 h1#game-title {
   padding-top: 10px;
   margin: 0;
+  /* font-variant: all-small-caps;; */
 }
 
 #game-section {
@@ -65,18 +66,17 @@ label {
 }
 
 .leaderboard h3 {
-  font-size: 36px;
-  font-variant: all-small-caps;
+  font-size: 18px;
+  /* font-variant: all-small-caps; */
 }
 
 .leaderboard table {
   margin: auto;
-  font-size: 150%;
+  font-size: 110%;
 }
 
 .leaderboard table * {
   font-family: system-ui;
-
 }
 
 .leaderboard thead {
@@ -95,10 +95,15 @@ label {
   text-align: left;
 }
 
+
 .leaderboard table td {
   color: black;
   /* border-radius: 13px 0 0 13px; */
   padding: 2px 14px;
+}
+.leaderboard td small {
+  width: 40px;
+  display: inline-block;
 }
 
 .leaderboard table td:last-of-type {

@@ -4,7 +4,7 @@ import { getAllUsers } from "./users";
 import { io } from ".";
 
 
-type LeaderboardEntry = Pick<UserInfo, 'userID' | 'score'>;
+type LeaderboardEntry = Pick<UserInfo, 'username' | 'score'>;
 export type LeaderboardType = {
   lastUpdated: number;
   entries: LeaderboardEntry[];
@@ -18,7 +18,7 @@ export async function updateLeaderboard(): Promise<LeaderboardType> {
   const sortedByScore = allUserInfos.sort((a, b) => b.score - a.score);
   const topBoard = sortedByScore.slice(0, NUM_ON_BOARD);
   const leaderboardEntries = topBoard.map(userInfo => ({
-    userID: userInfo.userID,
+    username: userInfo.username,
     score: userInfo.score
   }));
   leaderboard = {

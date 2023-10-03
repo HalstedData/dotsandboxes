@@ -6,6 +6,15 @@ type LeaderboardProps = {
   leaderboard: LeaderboardType | null;
   userInfo: UserInfo | null;
 }
+const positions = [
+  '1st',
+  '2nd',
+  '3rd',
+  '4th',
+  '5th',
+  '6th'
+];
+
 
 export default function Leaderboard(props: LeaderboardProps) {
   const { leaderboard, userInfo } = props;
@@ -18,15 +27,15 @@ export default function Leaderboard(props: LeaderboardProps) {
       <h3>Leaderboard</h3>
       <table>
         <thead>
-          <th>userID</th>
+          <th>user</th>
           <th>score</th>
         </thead>
         <tbody>
           {
-            leaderboard.entries.map(({ userID, score }) => {
+            leaderboard.entries.map(({ username, score }, index) => {
               return (
-                <tr className={cn({ isYou: userID === userInfo?.userID })}>
-                  <td>{userID}</td>
+                <tr className={cn({ isYou: username === userInfo?.username })}>
+                  <td><small>{positions[index]}</small> {username}</td>
                   <td>{score}</td>
                 </tr>
               );

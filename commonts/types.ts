@@ -1,13 +1,13 @@
 import { LeaderboardType } from "../node-ws-server/leaderboard";
 
 // APP/SOCKET RELATED
-export type UserAuth = { userID: string, authToken: string };
+export type UserAuth = { username: string, authToken: string };
 export type GameResult = [
   beforeScore: number,
   winOrLoss: 'W' | 'L' | 'DROPPED' | 'OPP-DROPPED',
   afterScore: number,
   gameID: string,
-  ...opponentUserIDs: string[]
+  ...opponentUsernames: string[]
 ];
 // export type GameResult = [
 //   beforeScore: number,
@@ -43,9 +43,9 @@ type LineArray = (string | null)[][];
 export type Line = ['h' | 'v', number, number];
 
 // v2
-export type Move = [userID: string, ...line: Line];
+export type Move = [username: string, ...line: Line];
 export type Player = {
-  userID: string;
+  username: string;
   score: number;
 };
 export type GameV2Meta = {
@@ -53,7 +53,7 @@ export type GameV2Meta = {
   gridSize: number;
   players: Player[];
   moveOrder: Move[];
-  winnerUserID?: string;
+  winnerUsername?: string;
 };
 
 export type GameV2State = {

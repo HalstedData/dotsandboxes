@@ -25,7 +25,7 @@ export function fillBoxes(context: CanvasRenderingContext2D, { state, meta }: Cl
     for (let j = 0; j < gridSize; j++) {
       const curSquare = squares[i][j];
       if (curSquare !== null) {
-        context.fillStyle = PLAYER_COLORS[meta.players.findIndex(player => player.userID === curSquare)];
+        context.fillStyle = PLAYER_COLORS[meta.players.findIndex(player => player.username === curSquare)];
         context.fillRect(
           20 + j * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
           20 + i * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
@@ -44,7 +44,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
   for (let i = 0; i < gridSize + 1; i++) {
     for (let j = 0; j < gridSize; j++) {
       const curSquare = hlines[i][j];
-      const colorIndex = curSquare !== null ? players.findIndex(player => player.userID === curSquare) : -1;
+      const colorIndex = curSquare !== null ? players.findIndex(player => player.username === curSquare) : -1;
       const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
 
       // Reset stroke style
@@ -65,7 +65,7 @@ export function drawLines(context: CanvasRenderingContext2D, { state, meta }: Cl
       context.strokeStyle = LIGHT_GRAY;
       if (i < gridSize) {
         const curSquare = vlines[i][j];
-        const colorIndex = curSquare !== null ? players.findIndex(player => player.userID === curSquare) : -1;
+        const colorIndex = curSquare !== null ? players.findIndex(player => player.username === curSquare) : -1;
         const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
         // Reset stroke style
         context.strokeStyle = LIGHT_GRAY;
@@ -96,17 +96,17 @@ export function displayScores(context: CanvasRenderingContext2D, { state, meta }
   const { myPlayerId, players, width } = meta;
 
 
-  const scoreByUserID = players
-    .reduce((acc, { userID, score }) => ({
+  const scoreByUsername = players
+    .reduce((acc, { username, score }) => ({
       ...acc,
-      [userID]: {
+      [username]: {
         score,
-        squares: squares.flat().filter((s) => s === userID).length,
+        squares: squares.flat().filter((s) => s === username).length,
       }
     }), {} as Record<string, { score: number, squares: number }>);
 
-  const { score: youScore, squares: youSquares } = scoreByUserID[myPlayerId];
-  const [opponentUserID, opponent] = Object.entries(scoreByUserID)
+  const { score: youScore, squares: youSquares } = scoreByUsername[myPlayerId];
+  const [opponentUsername, opponent] = Object.entries(scoreByUsername)
     .find(([compareID]) => compareID !== myPlayerId) || [];
   const { score: opponentScore, squares: opponentSquares } = opponent || {};
 
@@ -128,7 +128,7 @@ export function displayScores(context: CanvasRenderingContext2D, { state, meta }
   );
 
   context.fillText(
-    `${opponentUserID} (${opponentScore}): ${opponentSquares}`,
+    `${opponentUsername} (${opponentScore}): ${opponentSquares}`,
     20,
     width + SCORE_AREA_HEIGHT / 2 + 30
   );

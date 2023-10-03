@@ -8,12 +8,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <>
     <App />
     <div className="floatingbg"/>
-    {/* <div className="floatingbg"/>
+    <div className="floatingbg"/>
     <div className="floatingbg"/>
     <div className="floatingbg"/>
 
 
-    <div className="floatingbgsecond"/>
+    {/* <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/>
     <div className="floatingbgsecond"/> */}
