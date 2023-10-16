@@ -124,6 +124,7 @@ io.on('connection', socket => {
   socket.emit('leaderboard', getLeaderboard());
 
   socket.on('game-request', async (gridSize, cb) => {
+    console.log('game request for', gridSize);
     const { username } = socket.data;
     const waiting = waitingRooms.get(gridSize) || [];
     const otherUsernamesWaiting = uniq(waiting.map(userWaiting => userWaiting.username));
