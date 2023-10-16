@@ -1,0 +1,146 @@
+import { ClientGameV2 } from "../../commonts/types";
+
+// CONSTANTS
+const LINE_THICKNESS = 5;
+// const SCREEN_SIZE = 600;
+const DOT_RADIUS = 7;
+const SCORE_AREA_HEIGHT = 100;
+// const WINDOW_SIZE = SCREEN_SIZE + SCORE_AREA_HEIGHT;
+
+const WHITE = "#fff";
+const RED = "#ff0000";
+const BLUE = "#0000ff";
+const BLACK = "#000000";
+const LIGHT_GRAY = "#cccccc";
+const PLAYER_COLORS = [RED, BLUE];
+
+
+
+export function fillBoxes(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { squares, } = state;
+  const { gridSize, width } = meta;
+  const boxSize = (width - 40) / gridSize;
+  const boxInnerMargin = 10;
+  for (let i = 0; i < gridSize; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const curSquare = squares[i][j];
+      if (curSquare !== null) {
+        context.fillStyle = PLAYER_COLORS[meta.players.findIndex(player => player.username === curSquare)];
+        context.fillRect(
+          20 + j * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
+          20 + i * boxSize + LINE_THICKNESS / 2 + boxInnerMargin,
+          boxSize - LINE_THICKNESS - 2 * boxInnerMargin,
+          boxSize - LINE_THICKNESS - 2 * boxInnerMargin
+        );
+      }
+    }
+  }
+}
+export function drawLines(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { hlines, vlines, } = state;
+  const { gridSize, width, players } = meta;
+  const boxSize = (width - 40) / gridSize;
+  context.lineWidth = LINE_THICKNESS;
+  for (let i = 0; i < gridSize + 1; i++) {
+    for (let j = 0; j < gridSize; j++) {
+      const curSquare = hlines[i][j];
+      const colorIndex = curSquare !== null ? players.findIndex(player => player.username === curSquare) : -1;
+      const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
+
+      // Reset stroke style
+      context.strokeStyle = LIGHT_GRAY;
+
+      context.beginPath();
+      context.moveTo(20 + j * boxSize, 20 + i * boxSize);
+      context.lineTo(20 + (j + 1) * boxSize, 20 + i * boxSize);
+      context.strokeStyle = color; // Set the stroke color here
+      context.closePath();
+      context.stroke();
+      context.closePath();
+    }
+  }
+
+  for (let i = 0; i < gridSize + 1; i++) {
+    for (let j = 0; j < gridSize + 1; j++) {
+      context.strokeStyle = LIGHT_GRAY;
+      if (i < gridSize) {
+        const curSquare = vlines[i][j];
+        const colorIndex = curSquare !== null ? players.findIndex(player => player.username === curSquare) : -1;
+        const color = colorIndex !== -1 ? PLAYER_COLORS[colorIndex] : LIGHT_GRAY;
+        // Reset stroke style
+        context.strokeStyle = LIGHT_GRAY;
+        context.beginPath();
+        context.moveTo(20 + j * boxSize, 20 + i * boxSize);
+        context.lineTo(20 + j * boxSize, 20 + (i + 1) * boxSize);
+        context.strokeStyle = color; // Set the stroke color here
+        context.closePath();
+        context.stroke();
+        context.closePath();
+      }
+      context.fillStyle = BLACK;
+      context.beginPath();
+      context.arc(
+        20 + j * boxSize,
+        20 + i * boxSize,
+        DOT_RADIUS,
+        0,
+        2 * Math.PI
+      );
+      context.fill();
+    }
+  }
+}
+
+export function displayScores(context: CanvasRenderingContext2D, { state, meta }: ClientGameV2) {
+  const { squares } = state;
+  const { myPlayerId, players, width } = meta;
+
+
+  const scoreByUsername = players
+    .reduce((acc, { username, score }) => ({
+      ...acc,
+      [username]: {
+        score,
+        squares: squares.flat().filter((s) => s === username).length,
+      }
+    }), {} as Record<string, { score: number, squares: number }>);
+
+  const { score: youScore, squares: youSquares } = scoreByUsername[myPlayerId];
+  const [opponentUsername, opponent] = Object.entries(scoreByUsername)
+    .find(([compareID]) => compareID !== myPlayerId) || [];
+  const { score: opponentScore, squares: opponentSquares } = opponent || {};
+
+  context.font = "bold 24px sans-serif";
+  context.fillStyle = BLACK;
+
+  context.fillRect(0, width, width, SCORE_AREA_HEIGHT);
+
+  context.fillStyle = WHITE;
+  context.globalAlpha = 0.7;
+  context.fillRect(0, width, width, SCORE_AREA_HEIGHT);
+  context.globalAlpha = 1;
+
+  context.fillStyle = BLACK;
+  context.fillText(
+    `You (${youScore}): ${youSquares}`,
+    20,
+    width + SCORE_AREA_HEIGHT / 2 - 10
+  );
+
+  context.fillText(
+    `${opponentUsername} (${opponentScore}): ${opponentSquares}`,
+    20,
+    width + SCORE_AREA_HEIGHT / 2 + 30
+  );
+}
+
+export default function drawBoard(canvas: HTMLCanvasElement, clientGame: ClientGameV2) {
+  const context = canvas.getContext("2d");
+  if (!context) throw "No context what?";
+
+  context.fillStyle = WHITE;
+  context.fillRect(0, 0, clientGame.meta.width, clientGame.meta.width + SCORE_AREA_HEIGHT);
+  fillBoxes(context, clientGame);
+  drawLines(context, clientGame);
+  displayScores(context, clientGame);
+}

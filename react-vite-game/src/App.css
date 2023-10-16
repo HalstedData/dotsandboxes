@@ -1,0 +1,201 @@
+
+h1#game-title {
+  padding-top: 10px;
+  margin: 0;
+  /* font-variant: all-small-caps;; */
+}
+
+#game-section {
+  text-align: center;
+  box-sizing: border-box;
+}
+
+#game-status {
+  font-style: italic;
+  padding: 5px;
+  margin: 5px;
+}
+
+canvas {
+  border: 1px solid black;
+  display: block;
+  margin: 0 auto;
+  box-sizing: border-box;
+  height: 100%;
+}
+
+.button-container {
+  /* position: absolute;
+  left: 50%;
+  bottom: 100px;
+  transform: translateX(-50%); */
+}
+
+.button-container button {
+  margin: 5px;
+}
+
+#game-result {
+  text-align: center;
+  font-size: 24px;
+  font-weight: bold;
+  margin-top: 20px;
+}
+
+select,
+input,
+button {
+  background: #001fe1;
+  color: #fff;
+  border: 1px solid white;
+  border-radius: 5px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+label {
+  margin-right: 5px;
+}
+
+.leaderboard {
+  position: relative;
+  display: inline-block;
+  background: #000;
+  border: 11px solid black;
+  box-shadow: rgba(0, 0, 0, 0.25) 0px 54px 55px, rgba(0, 0, 0, 0.12) 0px -12px 30px, rgba(0, 0, 0, 0.12) 0px 4px 6px, rgba(0, 0, 0, 0.17) 0px 12px 13px, rgba(0, 0, 0, 0.09) 0px -3px 5px;
+}
+
+.leaderboard h3 {
+  font-size: 18px;
+  /* font-variant: all-small-caps; */
+}
+
+.leaderboard table {
+  margin: auto;
+  font-size: 110%;
+}
+
+.leaderboard table * {
+  font-family: system-ui;
+}
+
+.leaderboard thead {
+  font-size: 20px;
+}
+
+.leaderboard tbody {
+  background: rgba(255, 166, 0, 0.9);
+}
+
+.leaderboard thead th:first-of-type {
+  text-align: left;
+}
+
+.leaderboard tbody td:first-of-type {
+  text-align: left;
+}
+
+
+.leaderboard table td {
+  color: black;
+  /* border-radius: 13px 0 0 13px; */
+  padding: 2px 14px;
+}
+.leaderboard td small {
+  width: 40px;
+  display: inline-block;
+}
+
+.leaderboard table td:last-of-type {
+  border-radius: 0;
+}
+
+.leaderboard table tr.isYou td {
+  background: rgba(5, 255, 5, 0.8);
+  font-weight: bold;
+}
+
+.leaderboard i {
+  font-size: 16px;
+  font-family: ui-monospace;
+}
+
+pre {
+  font-family: ui-monospace;
+}
+
+
+.panel {
+  background-color: rgb(100 194 255 / 60%);
+  /* background-image: url('https://www.transparenttextures.com/patterns/fresh-snow.png'); */
+  padding: 1vh 2vw;
+  margin-bottom: 1em;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  zoom: 1.2;
+  min-height: 2.5em;
+  position: relative;
+  z-index: 1000;
+  font-variant-caps: all-small-caps;
+  font-variant: all-small-caps;
+}
+
+.panel button {
+  font-size: 108%;
+}
+/* .panel button:hover {
+  background-color: blue;
+} */
+
+#options {
+  display: flex;
+  gap: 5px;
+  align-items: center;
+}
+
+.panel label {
+  font-weight: 700;
+  font-size: 110%;
+}
+
+#grid-size {
+  margin-right: 1em;
+}
+
+h3 {
+  margin: 0;
+}
+
+
+
+
+
+
+
+
+canvas {
+  -webkit-touch-callout: none;
+  -webkit-user-select: none;
+  -khtml-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+  outline: none;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  /* mobile webkit */
+
+
+  box-shadow: rgba(255, 255, 255, 0.25) 0px 54px 55px, rgba(255, 255, 255, 0.12) 0px -12px 30px, rgba(255, 255, 255, 0.12) 0px 4px 6px, rgba(255, 255, 255, 0.17) 0px 12px 13px, rgba(255, 255, 255, 0.09) 0px -3px 5px;
+
+}
+
+
+
+.app-container {
+  /* font-size: 14px; */
+  height: 100vh;
+  z-index: 100;
+  position: relative;
+  padding-top: 1.5em;
+}
