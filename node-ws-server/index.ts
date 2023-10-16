@@ -84,7 +84,7 @@ async function cueComputerGameForWaitingPlayer(gridSize: number) {
 
 
 function scheduleCheckForWaiting(gridSize: number) {
-  const SECONDS_TO_WAIT = 5;
+  const SECONDS_TO_WAIT = 8;
   const curTimeout = checkTimeouts.get(gridSize);
   curTimeout && clearTimeout(curTimeout);
   checkTimeouts.set(
